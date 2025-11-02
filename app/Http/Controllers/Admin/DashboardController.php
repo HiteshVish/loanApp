@@ -1,0 +1,186 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\KycApplication;
+use App\Models\User;
+use App\Models\LoanDetail;
+use App\Models\Transaction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
+class DashboardController extends Controller
+{
+    /**
+     * Display the admin dashboard with statistics
+     */
+    public function index()
+    {
+        // Get user stats
+        $totalUsers = User::count();
+        $verifiedUsers = User::whereNotNull('email_verified_at')->count();
+        $unverifiedUsers = User::whereNull('email_verified_at')->count();
+        $newUsersThisMonth = User::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->count();
+
+        // Get KYC stats
+        $totalApplications = KycApplication::count();
+        $pendingApplications = KycApplication::where('status', 'pending')->count();
+        $approvedApplications = KycApplication::where('status', 'approved')->count();
+        $rejectedApplications = KycApplication::where('status', 'rejected')->count();
+        $newApplicationsThisMonth = KycApplication::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->count();
+
+        // Get recent applications (last 5)
+        $recentApplications = KycApplication::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get applications by month for chart (last 6 months)
+        $applicationsChartData = [];
+        $usersChartData = [];
+        $months = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            
+            $applicationsChartData[] = KycApplication::whereMonth('created_at', $date->month)
+                ->whereYear('created_at', $date->year)
+                ->count();
+            
+            $usersChartData[] = User::whereMonth('created_at', $date->month)
+                ->whereYear('created_at', $date->year)
+                ->count();
+        }
+
+        // Get status distribution for pie chart
+        $statusDistribution = [
+            'Pending' => $pendingApplications,
+            'Approved' => $approvedApplications,
+            'Rejected' => $rejectedApplications
+        ];
+
+        // Calculate growth percentages
+        $lastMonthUsers = User::whereMonth('created_at', Carbon::now()->subMonth()->month)
+            ->whereYear('created_at', Carbon::now()->subMonth()->year)
+            ->count();
+        $userGrowth = $lastMonthUsers > 0 
+            ? round((($newUsersThisMonth - $lastMonthUsers) / $lastMonthUsers) * 100, 1) 
+            : 0;
+
+        $lastMonthApplications = KycApplication::whereMonth('created_at', Carbon::now()->subMonth()->month)
+            ->whereYear('created_at', Carbon::now()->subMonth()->year)
+            ->count();
+        $applicationGrowth = $lastMonthApplications > 0 
+            ? round((($newApplicationsThisMonth - $lastMonthApplications) / $lastMonthApplications) * 100, 1) 
+            : 0;
+
+        // Get loan statistics
+        $totalLoans = LoanDetail::count();
+        $pendingLoans = LoanDetail::where('status', 'pending')->count();
+        $approvedLoans = LoanDetail::where('status', 'approved')->count();
+        $completedLoans = LoanDetail::where('status', 'completed')->count();
+        $rejectedLoans = LoanDetail::where('status', 'rejected')->count();
+        
+        // Get total loan amounts
+        $totalLoanAmount = LoanDetail::sum('loan_amount');
+        $approvedLoanAmount = LoanDetail::where('status', 'approved')->sum('loan_amount');
+        $pendingLoanAmount = LoanDetail::where('status', 'pending')->sum('loan_amount');
+        
+        // Get collection statistics
+        $today = Carbon::today();
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $startOfDay = Carbon::today()->startOfDay();
+        
+        // Daily collection
+        $dailyCollection = Transaction::where('status', 'completed')
+            ->whereDate('paid_date', $today)
+            ->sum('amount');
+        
+        // Monthly collection  
+        $monthlyCollection = Transaction::where('status', 'completed')
+            ->whereDate('paid_date', '>=', $startOfMonth)
+            ->sum('amount');
+        
+        // Total collection (all time)
+        $totalCollection = Transaction::where('status', 'completed')
+            ->sum('amount');
+        
+        // Late fees collected
+        $dailyLateFees = Transaction::where('status', 'completed')
+            ->whereDate('paid_date', $today)
+            ->sum('late_fee');
+        
+        $monthlyLateFees = Transaction::where('status', 'completed')
+            ->whereDate('paid_date', '>=', $startOfMonth)
+            ->sum('late_fee');
+        
+        // Pending payments (overdue)
+        $pendingPayments = Transaction::where('status', 'pending')
+            ->where('due_date', '<', $today)
+            ->count();
+        
+        $pendingPaymentAmount = Transaction::where('status', 'pending')
+            ->where('due_date', '<', $today)
+            ->sum('amount');
+        
+        // Delayed payments
+        $delayedPayments = Transaction::where('status', 'delayed')
+            ->count();
+        
+        $delayedPaymentAmount = Transaction::where('status', 'delayed')
+            ->get()
+            ->sum(function($t) {
+                return $t->amount + $t->late_fee;
+            });
+        
+        // New loans this month
+        $newLoansThisMonth = LoanDetail::whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->count();
+
+        return view('dashboard', compact(
+            'totalUsers',
+            'verifiedUsers',
+            'unverifiedUsers',
+            'newUsersThisMonth',
+            'userGrowth',
+            'totalApplications',
+            'pendingApplications',
+            'approvedApplications',
+            'rejectedApplications',
+            'newApplicationsThisMonth',
+            'applicationGrowth',
+            'recentApplications',
+            'applicationsChartData',
+            'usersChartData',
+            'months',
+            'statusDistribution',
+            'totalLoans',
+            'pendingLoans',
+            'approvedLoans',
+            'completedLoans',
+            'rejectedLoans',
+            'totalLoanAmount',
+            'approvedLoanAmount',
+            'pendingLoanAmount',
+            'dailyCollection',
+            'monthlyCollection',
+            'totalCollection',
+            'dailyLateFees',
+            'monthlyLateFees',
+            'pendingPayments',
+            'pendingPaymentAmount',
+            'delayedPayments',
+            'delayedPaymentAmount',
+            'newLoansThisMonth'
+        ));
+    }
+}
+
