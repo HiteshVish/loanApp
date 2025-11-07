@@ -9,20 +9,34 @@ use Illuminate\Http\Request;
 class SystemSettingsController extends Controller
 {
     /**
-     * Get all system settings as key-value pairs
+     * Get a single system setting value by key
      */
-    public function index()
+    public function index(Request $request)
     {
-        $settings = SystemSetting::select('key', 'value')->get();
+        $key = $request->query('key');
         
-        $keyValuePairs = [];
-        foreach ($settings as $setting) {
-            $keyValuePairs[$setting->key] = $setting->value;
+        if (!$key) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Key parameter is required'
+            ], 400);
+        }
+        
+        $setting = SystemSetting::where('key', $key)->first();
+        
+        if (!$setting) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Setting not found'
+            ], 404);
         }
         
         return response()->json([
             'success' => true,
-            'data' => $keyValuePairs
+            'data' => [
+                'key' => $setting->key,
+                'value' => $setting->value
+            ]
         ]);
     }
 }
