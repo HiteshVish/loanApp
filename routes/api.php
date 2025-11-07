@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserRegistrationController;
 use App\Http\Controllers\Api\LoanController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\SystemSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,4 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Transactions
     Route::get('/transaction', [TransactionController::class, 'transaction']);
+    
+    // System Settings
+    Route::get('/system-settings', [SystemSettingsController::class, 'index']);
 });
