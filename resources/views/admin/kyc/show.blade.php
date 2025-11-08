@@ -39,7 +39,7 @@
                     $email = $userDetail ? $userDetail->email : $loan->user->email;
                 @endphp
                 @if($userDetail && $userDetail->photo)
-                    <img src="{{ Storage::url($userDetail->photo) }}" alt class="rounded mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                    <img src="{{ url('storage/app/public/' . $userDetail->photo) }}" alt class="rounded mb-3" style="width: 120px; height: 120px; object-fit: cover;">
                 @elseif($loan->user->avatar)
                     <img src="{{ $loan->user->avatar }}" alt class="rounded-circle mb-3" width="120">
                 @else
@@ -262,21 +262,21 @@
                 <div class="row">
                     @if($userDetail && $userDetail->aadhar)
                     <div class="col-md-4 mb-3">
-                        <a href="{{ Storage::url($userDetail->aadhar) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                        <a href="{{ url('storage/app/public/' . $userDetail->aadhar) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
                             <i class="bx bx-file"></i> View Aadhar
                         </a>
                     </div>
                     @endif
                     @if($userDetail && $userDetail->pan)
                     <div class="col-md-4 mb-3">
-                        <a href="{{ Storage::url($userDetail->pan) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                        <a href="{{ url('storage/app/public/' . $userDetail->pan) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
                             <i class="bx bx-file"></i> View PAN
                         </a>
                     </div>
                     @endif
                     @if($userDetail && $userDetail->photo)
                     <div class="col-md-4 mb-3">
-                        <a href="{{ Storage::url($userDetail->photo) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                        <a href="{{ url('storage/app/public/' . $userDetail->photo) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
                             <i class="bx bx-image"></i> View Photo
                         </a>
                     </div>

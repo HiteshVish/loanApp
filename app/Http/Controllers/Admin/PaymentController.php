@@ -265,13 +265,15 @@ class PaymentController extends Controller
      */
     private function updateTransactionStatuses()
     {
-        // Get all pending transactions with past due dates
-        $pendingTransactions = Transaction::where('status', 'pending')
+        // Get all pending and delayed transactions with past due dates
+        // Process both to ensure late fees are recalculated correctly
+        $transactions = Transaction::whereIn('status', ['pending', 'delayed'])
             ->where('due_date', '<', Carbon::today(config('app.timezone')))
             ->with('loanDetail')
+            ->orderBy('due_date', 'asc') // Process in chronological order for accurate consecutive counting
             ->get();
 
-        foreach ($pendingTransactions as $transaction) {
+        foreach ($transactions as $transaction) {
             // Use application timezone for date comparisons
             $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
             $today = Carbon::today(config('app.timezone'));

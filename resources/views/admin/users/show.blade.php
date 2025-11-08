@@ -72,16 +72,33 @@
                 <p class="fw-bold">{{ $user->userDetail->mobile ?? '-' }}</p>
             </div>
             <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">Aadhar Number</label>
-                <p class="fw-bold">{{ $user->userDetail->aadhar ?? '-' }}</p>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label class="form-label text-muted">PAN Number</label>
-                <p class="fw-bold">{{ $user->userDetail->pan ?? '-' }}</p>
-            </div>
-            <div class="col-md-6 mb-3">
                 <label class="form-label text-muted">Date of Birth</label>
-                <p>{{ $user->userDetail->date_of_birth ? \Carbon\Carbon::parse($user->userDetail->date_of_birth)->format('M d, Y') : '-' }}</p>
+                <p>{{ $user->userDetail->dob ? \Carbon\Carbon::parse($user->userDetail->dob)->format('M d, Y') : '-' }}</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12 mb-3">
+                <label class="form-label text-muted">Uploaded Documents</label>
+                <div class="d-flex gap-2 flex-wrap">
+                    @if($user->userDetail->aadhar)
+                    <a href="{{ url('storage/app/public/' . $user->userDetail->aadhar) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-file"></i> View Aadhar
+                    </a>
+                    @endif
+                    @if($user->userDetail->pan)
+                    <a href="{{ url('storage/app/public/' . $user->userDetail->pan) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-file"></i> View PAN
+                    </a>
+                    @endif
+                    @if($user->userDetail->photo)
+                    <a href="{{ url('storage/app/public/' . $user->userDetail->photo) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-image"></i> View Photo
+                    </a>
+                    @endif
+                    @if(!$user->userDetail->aadhar && !$user->userDetail->pan && !$user->userDetail->photo)
+                    <p class="text-muted mb-0">No documents uploaded</p>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
