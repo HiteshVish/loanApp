@@ -279,14 +279,14 @@ class PaymentController extends Controller
             ->get();
 
         if ($transactions->isEmpty()) {
-            \Log::info('No transactions found to update', [
+            Log::info('No transactions found to update', [
                 'today' => $todayString,
                 'count' => Transaction::whereIn('status', ['pending', 'delayed'])->count()
             ]);
             return;
         }
 
-        \Log::info('Found transactions to update', [
+        Log::info('Found transactions to update', [
             'count' => $transactions->count(),
             'today' => $todayString
         ]);
@@ -296,23 +296,56 @@ class PaymentController extends Controller
         foreach ($transactions as $transaction) {
             $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
             
+            Log::info('Processing transaction in first pass', [
+                'transaction_id' => $transaction->id,
+                'loan_id' => $transaction->loan_id,
+                'due_date' => $transaction->due_date,
+                'due_date_parsed' => $dueDate->toDateString(),
+                'today' => $today->toDateString(),
+                'is_lt_today' => $dueDate->lt($today),
+                'current_status' => $transaction->status
+            ]);
+            
             if ($dueDate->lt($today)) {
                 // Calculate days late correctly (today - due_date)
                 $daysLate = $today->diffInDays($dueDate, false);
                 
+                Log::info('Transaction is past due', [
+                    'transaction_id' => $transaction->id,
+                    'days_late' => $daysLate
+                ]);
+                
                 if ($daysLate > 0) {
+                    $oldStatus = $transaction->status;
                     $transaction->days_late = $daysLate;
                     $transaction->status = 'delayed';
-                    $transaction->save();
-                    $updatedCount++;
+                    $saved = $transaction->save();
                     
-                    \Log::info('Updated transaction to delayed', [
+                    // Refresh to verify the save
+                    $transaction->refresh();
+                    
+                    Log::info('Attempted to save transaction', [
                         'transaction_id' => $transaction->id,
-                        'loan_id' => $transaction->loan_id,
-                        'due_date' => $transaction->due_date,
+                        'old_status' => $oldStatus,
+                        'new_status' => $transaction->status,
+                        'days_late' => $transaction->days_late,
+                        'saved' => $saved,
+                        'fresh_status' => $transaction->status
+                    ]);
+                    
+                    $updatedCount++;
+                } else {
+                    Log::warning('Days late is not > 0', [
+                        'transaction_id' => $transaction->id,
                         'days_late' => $daysLate
                     ]);
                 }
+            } else {
+                Log::info('Transaction is not past due', [
+                    'transaction_id' => $transaction->id,
+                    'due_date' => $dueDate->toDateString(),
+                    'today' => $today->toDateString()
+                ]);
             }
         }
         
