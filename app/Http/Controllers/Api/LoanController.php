@@ -32,14 +32,7 @@ class LoanController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Loan details submitted successfully',
-            'data' => [
-                'loanID' => $loanDetail->loan_id,
-                'loan_amount' => $loanDetail->loan_amount,
-                'tenure' => $loanDetail->tenure,
-                'status' => $loanDetail->status,
-                'created_at' => $loanDetail->created_at,
-            ]
+            'message' => 'Loan details submitted successfully'
         ], 200);
     }
 

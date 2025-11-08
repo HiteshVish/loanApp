@@ -45,12 +45,7 @@ class ContactController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Contacts saved successfully',
-            'data' => [
-                'user_id' => $userId,
-                'total_contacts' => count($insertedContacts),
-                'contacts' => $insertedContacts
-            ]
+            'message' => 'Contacts saved successfully'
         ], 201);
     }
 }

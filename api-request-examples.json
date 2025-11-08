@@ -1,0 +1,509 @@
+{
+  "base_url": "https://ddfc.sofftsolution.dev/api",
+  "authentication": {
+    "type": "Bearer Token",
+    "header": "Authorization: Bearer {token}",
+    "note": "All protected routes require authentication token from login endpoint"
+  },
+  "public_endpoints": {
+    "login": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/login",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "email": "user@example.com",
+        "password": "password123"
+      },
+      "response_success": {
+        "success": true,
+        "message": "Login successful",
+        "authtoken": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "userid": 1,
+        "RegistrationFlag": 0,
+        "data": {
+          "user": {
+            "id": 1,
+            "name": "John Doe",
+            "email": "user@example.com",
+            "role": "user",
+            "kyc_status": "not_submitted",
+            "from_register": false
+          },
+          "token_type": "Bearer"
+        }
+      },
+      "response_error": {
+        "message": "The provided credentials are incorrect.",
+        "errors": {
+          "email": ["The provided credentials are incorrect."]
+        }
+      }
+    },
+    "google_login_simple": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/google-login-simple",
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "email": "user@gmail.com",
+        "google_id": "123456789012345678901",
+        "image_url": "https://lh3.googleusercontent.com/a/xxxxx",
+        "name": "John Doe"
+      },
+      "response_success": {
+        "success": true,
+        "message": "Google login successful",
+        "userid": 1,
+        "authtoken": "1|xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "kyc_completed": 0
+      },
+      "response_error": {
+        "success": false,
+        "message": "Google login failed: {error_message}"
+      }
+    }
+  },
+  "protected_endpoints": {
+    "get_user": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/user",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "data": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "user@example.com",
+          "role": "user",
+          "kyc_status": "not_submitted",
+          "avatar": null,
+          "email_verified_at": "2024-01-01T00:00:00.000000Z",
+          "created_at": "2024-01-01T00:00:00.000000Z",
+          "updated_at": "2024-01-01T00:00:00.000000Z"
+        }
+      }
+    },
+    "get_user_details": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/userDetails",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "message": "User details retrieved successfully",
+        "data": {
+          "full_name": "John Doe",
+          "email": "user@example.com",
+          "phone": "1234567890",
+          "createat": "2024-01-01 00:00:00"
+        }
+      }
+    },
+    "get_kyc_status": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/kycStatus",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "message": "KYC status retrieved successfully",
+        "data": {
+          "user_id": 1,
+          "kyc_completed": 1,
+          "has_user_details": "Yes",
+          "user_details_available": true
+        }
+      }
+    },
+    "logout": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/logout",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "message": "Logged out successfully"
+      }
+    },
+    "contacts_bulk": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/contacts/bulk",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "contacts": [
+          {
+            "contact_number": "9876543210",
+            "name": "John Doe"
+          },
+          {
+            "contact_number": "9876543211",
+            "name": "Jane Smith"
+          }
+        ]
+      },
+      "response_success": {
+        "success": true,
+        "message": "Contacts saved successfully",
+        "data": {
+          "user_id": 1,
+          "total_contacts": 2,
+          "contacts": [
+            {
+              "id": 1,
+              "user_id": 1,
+              "contact_number": "9876543210",
+              "name": "John Doe",
+              "created_at": "2024-01-01T00:00:00.000000Z",
+              "updated_at": "2024-01-01T00:00:00.000000Z"
+            },
+            {
+              "id": 2,
+              "user_id": 1,
+              "contact_number": "9876543211",
+              "name": "Jane Smith",
+              "created_at": "2024-01-01T00:00:00.000000Z",
+              "updated_at": "2024-01-01T00:00:00.000000Z"
+            }
+          ]
+        }
+      }
+    },
+    "locations": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/locations",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "latitude": 28.6139,
+        "longitude": 77.2090
+      },
+      "response_success": {
+        "success": true,
+        "message": "Location saved successfully",
+        "data": {
+          "user_id": 1,
+          "location": {
+            "id": 1,
+            "user_id": 1,
+            "latitude": "28.6139",
+            "longitude": "77.2090",
+            "created_at": "2024-01-01T00:00:00.000000Z",
+            "updated_at": "2024-01-01T00:00:00.000000Z"
+          }
+        }
+      }
+    },
+    "user_registration_form": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/userRegistration/form",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}",
+        "Content-Type": "multipart/form-data"
+      },
+      "body": {
+        "name": "John Doe",
+        "dob": "1990-01-01",
+        "gender": "male",
+        "nationality": "Indian",
+        "mob": "9876543210",
+        "email": "user@example.com",
+        "currentAdd": "123 Main Street, City",
+        "permanentAdd": "123 Main Street, City",
+        "aadhar": "file_upload",
+        "pan": "file_upload",
+        "photo": "file_upload"
+      },
+      "note": "This endpoint accepts multipart/form-data. All fields are flat key-value pairs (no nested arrays). Files should be uploaded as form data with keys: aadhar, pan, photo",
+      "response_success": {
+        "success": true,
+        "message": "User registration form submitted successfully",
+        "data": {
+          "user_id": 1,
+          "user_detail": {
+            "id": 1,
+            "user_id": 1,
+            "name": "John Doe",
+            "dob": "1990-01-01",
+            "gender": "male",
+            "nationality": "Indian",
+            "mobile": "9876543210",
+            "email": "user@example.com",
+            "current_address": "123 Main Street, City",
+            "permanent_address": "123 Main Street, City",
+            "aadhar": "documents/aadhar/xxxxx.jpg",
+            "pan": "documents/pan/xxxxx.jpg",
+            "photo": "documents/photo/xxxxx.jpg",
+            "created_at": "2024-01-01T00:00:00.000000Z",
+            "updated_at": "2024-01-01T00:00:00.000000Z"
+          },
+          "uploaded_files": {
+            "aadhar": "documents/aadhar/xxxxx.jpg",
+            "pan": "documents/pan/xxxxx.jpg",
+            "photo": "documents/photo/xxxxx.jpg"
+          }
+        }
+      }
+    },
+    "loan_details": {
+      "method": "POST",
+      "url": "https://ddfc.sofftsolution.dev/api/loanDetails",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "loanAmount": 50000,
+        "tenure": 12
+      },
+      "response_success": {
+        "success": true,
+        "message": "Loan details submitted successfully",
+        "data": {
+          "loanID": "LOAN-20240101-001",
+          "loan_amount": 50000,
+          "tenure": 12,
+          "status": "approved",
+          "created_at": "2024-01-01T00:00:00.000000Z"
+        }
+      },
+      "validation_rules": {
+        "loanAmount": "required|numeric|min:1000|max:10000000",
+        "tenure": "required|integer|min:1|max:60"
+      }
+    },
+    "loan_applications": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/loan_applications",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "message": "Loan applications retrieved successfully",
+        "data": [
+          {
+            "loanid": "LOAN-20240101-001",
+            "amount": 50000,
+            "enddate": "2025-01-01",
+            "tenure": 12,
+            "applied_date": "2024-01-01 00:00:00",
+            "status": "approved"
+          }
+        ]
+      },
+      "response_empty": {
+        "success": true,
+        "message": "No loan applications found",
+        "data": []
+      }
+    },
+    "loan_application_summary": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/loan_application",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_success": {
+        "success": true,
+        "message": "Loan application summary retrieved successfully",
+        "data": {
+          "total_application": 5,
+          "approved": 3,
+          "total_amount": 250000,
+          "successrate": 60
+        }
+      }
+    },
+    "app_dashboard": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/appDashboard",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_no_loans": {
+        "success": true,
+        "data": {
+          "status": "no_loans",
+          "message": "No loan applications found"
+        }
+      },
+      "response_pending": {
+        "success": true,
+        "data": {
+          "status": "pending",
+          "message": "Application under review",
+          "application_submitted_date": "2024-01-01 00:00:00"
+        }
+      },
+      "response_approved": {
+        "success": true,
+        "data": {
+          "status": "approved",
+          "loanid": "LOAN-20240101-001",
+          "outstanding": 45000,
+          "nextEmi": 5000,
+          "due_on": "2024-02-01"
+        }
+      },
+      "response_approved_all_paid": {
+        "success": true,
+        "data": {
+          "status": "approved",
+          "loanid": "LOAN-20240101-001",
+          "outstanding": 0,
+          "nextEmi": 0,
+          "due_on": null,
+          "message": "All payments completed"
+        }
+      },
+      "response_rejected": {
+        "success": true,
+        "data": {
+          "status": "rejected",
+          "message": "Loan application was rejected"
+        }
+      }
+    },
+    "transaction": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/transaction",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "response_no_loans": {
+        "success": true,
+        "data": {
+          "status": "no_loans",
+          "message": "No loan applications found"
+        }
+      },
+      "response_pending": {
+        "success": true,
+        "data": {
+          "status": "pending",
+          "application_submitted_date": "2024-01-01 00:00:00"
+        }
+      },
+      "response_approved": {
+        "success": true,
+        "data": {
+          "status": "approved",
+          "loanid": "LOAN-20240101-001",
+          "transactions": [
+            {
+              "amount": 5000,
+              "date": "01 Feb 2024",
+              "status": "pending",
+              "days_late": 0,
+              "late_fee": 0
+            },
+            {
+              "amount": 5250,
+              "date": "01 Mar 2024",
+              "status": "delayed (unpaid)",
+              "days_late": 5,
+              "late_fee": 250
+            }
+          ]
+        }
+      },
+      "response_rejected": {
+        "success": true,
+        "data": {
+          "status": "rejected",
+          "message": "Loan application was rejected"
+        }
+      }
+    },
+    "system_settings": {
+      "method": "GET",
+      "url": "https://ddfc.sofftsolution.dev/api/system-settings?key=default_interest_rate",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer {token}"
+      },
+      "body": null,
+      "query_parameters": {
+        "key": "default_interest_rate"
+      },
+      "response_success": {
+        "success": true,
+        "data": {
+          "key": "default_interest_rate",
+          "value": "20"
+        }
+      },
+      "response_error_missing_key": {
+        "success": false,
+        "message": "Key parameter is required"
+      },
+      "response_error_not_found": {
+        "success": false,
+        "message": "Setting not found"
+      }
+    }
+  },
+  "common_error_responses": {
+    "unauthorized": {
+      "message": "Unauthenticated."
+    },
+    "validation_error": {
+      "message": "The given data was invalid.",
+      "errors": {
+        "field_name": ["The field name is required."]
+      }
+      },
+    "not_found": {
+      "message": "Not Found"
+    },
+    "server_error": {
+      "message": "Server Error"
+    }
+  },
+  "notes": {
+    "authentication": "All protected endpoints require Bearer token in Authorization header",
+    "file_uploads": "userRegistration/form endpoint accepts multipart/form-data for file uploads",
+    "date_formats": "Dates are returned in ISO 8601 format (YYYY-MM-DDTHH:mm:ss.ssssssZ) or custom formats as shown",
+    "numeric_limits": {
+      "loanAmount": "Min: 1000, Max: 10000000 (1 Cr)",
+      "tenure": "Min: 1 month, Max: 60 months",
+      "latitude": "Range: -90 to 90",
+      "longitude": "Range: -180 to 180"
+    }
+  }
+}

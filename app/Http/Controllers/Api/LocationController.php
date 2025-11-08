@@ -30,11 +30,7 @@ class LocationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Location saved successfully',
-            'data' => [
-                'user_id' => $userId,
-                'location' => $location
-            ]
+            'message' => 'Location saved successfully'
         ], 201);
     }
 }

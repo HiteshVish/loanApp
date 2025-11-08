@@ -16,24 +16,21 @@ class UserRegistrationController extends Controller
     {
         $validated = $request->validate([
             // Personal Details
-            'personalDetail' => 'required|array',
-            'personalDetail.name' => 'required|string|max:255',
-            'personalDetail.dob' => 'required|date',
-            'personalDetail.gender' => 'required|string|in:male,female,other',
-            'personalDetail.nationality' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'dob' => 'required|date',
+            'gender' => 'required|string|in:male,female,other',
+            'nationality' => 'required|string|max:255',
             
             // Contact Info
-            'contactInfo' => 'required|array',
-            'contactInfo.mob' => 'required|string|max:20',
-            'contactInfo.email' => 'required|email|max:255',
-            'contactInfo.currentAdd' => 'required|string',
-            'contactInfo.permanentAdd' => 'required|string',
+            'mob' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'currentAdd' => 'required|string',
+            'permanentAdd' => 'required|string',
             
-            // Documents - Now as files
-            'document' => 'required|array',
-            'document.aadhar' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'document.pan' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'document.photo' => 'nullable|file|mimes:jpeg,jpg,png|max:2048',
+            // Documents - Files
+            'aadhar' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
+            'pan' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
+            'photo' => 'nullable|file|mimes:jpeg,jpg,png|max:2048',
         ]);
 
         // Get user ID from authenticated user
@@ -44,18 +41,18 @@ class UserRegistrationController extends Controller
         $panPath = null;
         $photoPath = null;
 
-        if ($request->hasFile('document.aadhar')) {
-            $aadharFile = $request->file('document.aadhar');
+        if ($request->hasFile('aadhar')) {
+            $aadharFile = $request->file('aadhar');
             $aadharPath = $aadharFile->store('documents/aadhar', 'public');
         }
 
-        if ($request->hasFile('document.pan')) {
-            $panFile = $request->file('document.pan');
+        if ($request->hasFile('pan')) {
+            $panFile = $request->file('pan');
             $panPath = $panFile->store('documents/pan', 'public');
         }
 
-        if ($request->hasFile('document.photo')) {
-            $photoFile = $request->file('document.photo');
+        if ($request->hasFile('photo')) {
+            $photoFile = $request->file('photo');
             $photoPath = $photoFile->store('documents/photo', 'public');
         }
 
@@ -76,14 +73,14 @@ class UserRegistrationController extends Controller
 
             // Update existing details
             $updateData = [
-                'name' => $validated['personalDetail']['name'],
-                'dob' => $validated['personalDetail']['dob'],
-                'gender' => $validated['personalDetail']['gender'],
-                'nationality' => $validated['personalDetail']['nationality'],
-                'mobile' => $validated['contactInfo']['mob'],
-                'email' => $validated['contactInfo']['email'],
-                'current_address' => $validated['contactInfo']['currentAdd'],
-                'permanent_address' => $validated['contactInfo']['permanentAdd'],
+                'name' => $validated['name'],
+                'dob' => $validated['dob'],
+                'gender' => $validated['gender'],
+                'nationality' => $validated['nationality'],
+                'mobile' => $validated['mob'],
+                'email' => $validated['email'],
+                'current_address' => $validated['currentAdd'],
+                'permanent_address' => $validated['permanentAdd'],
             ];
 
             // Only update file paths if new files are uploaded
@@ -97,14 +94,14 @@ class UserRegistrationController extends Controller
             // Create new details
             $userDetail = UserDetail::create([
                 'user_id' => $userId,
-                'name' => $validated['personalDetail']['name'],
-                'dob' => $validated['personalDetail']['dob'],
-                'gender' => $validated['personalDetail']['gender'],
-                'nationality' => $validated['personalDetail']['nationality'],
-                'mobile' => $validated['contactInfo']['mob'],
-                'email' => $validated['contactInfo']['email'],
-                'current_address' => $validated['contactInfo']['currentAdd'],
-                'permanent_address' => $validated['contactInfo']['permanentAdd'],
+                'name' => $validated['name'],
+                'dob' => $validated['dob'],
+                'gender' => $validated['gender'],
+                'nationality' => $validated['nationality'],
+                'mobile' => $validated['mob'],
+                'email' => $validated['email'],
+                'current_address' => $validated['currentAdd'],
+                'permanent_address' => $validated['permanentAdd'],
                 'aadhar' => $aadharPath,
                 'pan' => $panPath,
                 'photo' => $photoPath,
@@ -113,16 +110,7 @@ class UserRegistrationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User registration form submitted successfully',
-            'data' => [
-                'user_id' => $userId,
-                'user_detail' => $userDetail,
-                'uploaded_files' => [
-                    'aadhar' => $aadharPath,
-                    'pan' => $panPath,
-                    'photo' => $photoPath,
-                ]
-            ]
+            'message' => 'User registration form submitted successfully'
         ], 200);
     }
 }
