@@ -63,35 +63,36 @@ class UpdateTransactionStatuses extends Command
             }
         }
 
-        // Second pass: Calculate late fees for all delayed transactions
-        // Late fee logic:
-        // 1. If paid within 3 consecutive missed days: No late fee
-        // 2. After 3 consecutive missed days: Late fee accumulates daily (0.5% per day)
-        foreach ($transactions as $transaction) {
-            if ($transaction->status === 'delayed') {
-                $transaction->refresh();
+        // Second pass: Re-fetch delayed transactions to get fresh data
+        $delayedTransactions = Transaction::where('loan_id', $transactions->first()->loan_id)
+            ->where('status', 'delayed')
+            ->where('due_date', '<', $today)
+            ->with('loanDetail')
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Calculate late fees for all delayed transactions
+        foreach ($delayedTransactions as $transaction) {
+            // Get consecutive missed count BEFORE this transaction
+            $consecutiveMissed = $transaction->getConsecutiveMissedDays();
+            $totalConsecutiveMissed = $consecutiveMissed + 1; // Include current transaction
+            
+            // Only apply late fee if we have 4+ consecutive missed payments
+            if ($totalConsecutiveMissed >= 4) {
+                // Calculate late fee based on position in sequence
+                // Day 4 (1st day past grace): 0.5% × 1
+                // Day 5 (2nd day past grace): 0.5% × 2
+                $daysPastGrace = $totalConsecutiveMissed - 3;
                 
-                $consecutiveMissed = $transaction->getConsecutiveMissedDays();
-                $totalConsecutiveMissed = $consecutiveMissed + 1;
-                
-                // Only apply late fee if we have 4+ consecutive missed payments
-                if ($totalConsecutiveMissed >= 4) {
-                    $effectiveDaysLate = max(0, $transaction->days_late - 3);
-                    
-                    if ($effectiveDaysLate > 0) {
-                        // 0.5% per day after 3-day grace period
-                        $lateFee = $loanAmount * 0.005 * $effectiveDaysLate;
-                        $transaction->late_fee = round($lateFee, 2);
-                    } else {
-                        $transaction->late_fee = 0;
-                    }
-                } else {
-                    // Paid within 3-day grace period, no late fee
-                    $transaction->late_fee = 0;
-                }
-                
-                $transaction->save();
+                // Late fee = 0.5% per day for each day past the grace period
+                $lateFee = $loanAmount * 0.005 * $daysPastGrace;
+                $transaction->late_fee = round($lateFee, 2);
+            } else {
+                // Paid within 3-day grace period, no late fee
+                $transaction->late_fee = 0;
             }
+            
+            $transaction->save();
         }
 
         $this->info("Updated {$updatedCount} transaction(s) from pending to delayed.");
