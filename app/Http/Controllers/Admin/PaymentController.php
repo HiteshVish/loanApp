@@ -266,8 +266,17 @@ class PaymentController extends Controller
      */
     private function updateTransactionStatuses()
     {
+        // Log that method is being called
+        Log::info('=== updateTransactionStatuses METHOD CALLED ===');
+        
         $today = Carbon::today(config('app.timezone'));
         $todayString = $today->toDateString(); // Convert to Y-m-d format for database comparison
+        
+        Log::info('Date calculation', [
+            'today' => $today->toDateString(),
+            'todayString' => $todayString,
+            'timezone' => config('app.timezone')
+        ]);
         
         // Get all pending and delayed transactions with past due dates
         // Process both to ensure late fees are recalculated correctly
