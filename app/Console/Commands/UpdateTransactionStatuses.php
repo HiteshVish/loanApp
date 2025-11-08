@@ -82,19 +82,17 @@ class UpdateTransactionStatuses extends Command
 
         // Calculate late fees for all delayed transactions
         // Logic: If 4+ consecutive missed days, late fee applies to ALL delayed transactions
-        // Each transaction's late fee = 0.5% × number of consecutive missed days up to that point
+        // Each transaction stores flat 0.5% late fee (not cumulative)
         foreach ($delayedTransactions as $transaction) {
             $consecutiveMissed = $transaction->getConsecutiveMissedDays();
             $totalConsecutiveMissed = $consecutiveMissed + 1;
             
             // If we have 4+ consecutive missed payments, apply late fee to ALL delayed transactions
             if ($maxConsecutiveMissed >= 4) {
-                // Calculate late fee: 0.5% per day for EACH consecutive missed day
-                // Day 1 (1st missed): 0.5% × 1 = 0.5%
-                // Day 2 (2nd missed): 0.5% × 2 = 1.0%
-                // Day 3 (3rd missed): 0.5% × 3 = 1.5%
-                // Day 4 (4th missed): 0.5% × 4 = 2.0%
-                $lateFee = $loanAmount * 0.005 * $totalConsecutiveMissed;
+                // Flat 0.5% per transaction (not cumulative)
+                // Day 2 = 0.5%, Day 3 = 0.5%, Day 4 = 0.5%, etc.
+                // When paying, sum all individual late fees
+                $lateFee = $loanAmount * 0.005; // Flat 0.5% per transaction
                 $transaction->late_fee = round($lateFee, 2);
             } else {
                 // Paid within 3-day grace period, no late fee

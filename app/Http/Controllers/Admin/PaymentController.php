@@ -316,24 +316,24 @@ class PaymentController extends Controller
 
         // Calculate late fees for all delayed transactions
         // Logic: If 4+ consecutive missed days, late fee applies to ALL delayed transactions
-        // Each transaction's late fee = 0.5% × number of consecutive missed days up to that point
-        // Example: Day 2 (1st missed) = 0.5% × 1, Day 3 (2nd missed) = 0.5% × 2, Day 4 (3rd missed) = 0.5% × 3
+        // Each transaction stores flat 0.5% late fee
+        // When paying, sum all individual transaction late fees
+        // Example: Day 2 = 0.5%, Day 3 = 0.5%, Day 4 = 0.5% → Total = 1.5%
         foreach ($delayedTransactions as $transaction) {
             // Get consecutive missed count BEFORE this transaction
             $consecutiveMissed = $transaction->getConsecutiveMissedDays();
             $totalConsecutiveMissed = $consecutiveMissed + 1; // Include current transaction
             
             // If we have 4+ consecutive missed payments, apply late fee to ALL delayed transactions
-            // (including days 1, 2, 3, 4, etc.)
+            // Each transaction gets flat 0.5% late fee
             if ($maxConsecutiveMissed >= 4) {
-                // Calculate late fee: 0.5% per day for EACH consecutive missed day
-                // Day 1 (1st missed): 0.5% × 1 = 0.5%
-                // Day 2 (2nd missed): 0.5% × 2 = 1.0%
-                // Day 3 (3rd missed): 0.5% × 3 = 1.5%
-                // Day 4 (4th missed): 0.5% × 4 = 2.0%
-                // When paying on day 5, you pay late fee for days 2,3,4 = 0.5% × 3 = 1.5%
-                // But each transaction stores its own late fee based on its position
-                $lateFee = $loanAmount * 0.005 * $totalConsecutiveMissed;
+                // Flat 0.5% per transaction (not cumulative)
+                // Day 2 (1st missed): 0.5%
+                // Day 3 (2nd missed): 0.5%
+                // Day 4 (3rd missed): 0.5%
+                // Day 5 (4th missed): 0.5%
+                // When paying, sum all: 0.5% + 0.5% + 0.5% + 0.5% = 2.0%
+                $lateFee = $loanAmount * 0.005; // Flat 0.5% per transaction
                 $transaction->late_fee = round($lateFee, 2);
             } else {
                 // Paid within 3-day grace period (or on 3rd day), no late fee
