@@ -215,6 +215,7 @@
                         <th>Day</th>
                         <th>Due Date</th>
                         <th>EMI Amount</th>
+                        <th>Paid Amount</th>
                         <th>Status</th>
                         <th>Paid Date</th>
                         <th>Days Late</th>
@@ -229,6 +230,20 @@
                         <td><strong>Day {{ $index + 1 }}</strong></td>
                         <td>{{ $transaction->due_date->format('M d, Y') }}</td>
                         <td class="text-success">₹{{ number_format($transaction->amount, 2) }}</td>
+                        <td class="text-primary">
+                            @if($transaction->paid_amount && $transaction->paid_amount > 0)
+                                <strong>₹{{ number_format($transaction->paid_amount, 2) }}</strong>
+                                @php
+                                    $expectedAmount = $transaction->amount + $transaction->late_fee;
+                                    $remaining = $expectedAmount - $transaction->paid_amount;
+                                @endphp
+                                @if($remaining > 0)
+                                    <br><small class="text-muted">(Remaining: ₹{{ number_format($remaining, 2) }})</small>
+                                @endif
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
                         <td>
                             @if($transaction->status === 'completed')
                                 <span class="badge bg-success">Paid</span>
@@ -270,7 +285,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center">
+                        <td colspan="10" class="text-center">
                             <p class="mb-0">No transactions found for this loan.</p>
                         </td>
                     </tr>
