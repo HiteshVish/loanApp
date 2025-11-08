@@ -28,9 +28,9 @@ class UserRegistrationController extends Controller
             'permanentAdd' => 'required|string',
             
             // Documents - Files
-            'aadhar' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'pan' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:2048',
-            'photo' => 'nullable|file|mimes:jpeg,jpg,png|max:2048',
+            'aadhar' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
+            'pan' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
+            'photo' => 'nullable|file|mimes:jpeg,jpg,png',
         ]);
 
         // Get user ID from authenticated user
