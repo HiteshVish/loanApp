@@ -3,7 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Foundation\Configuration\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'kyc' => \App\Http\Middleware\CheckKycStatus::class,
         ]);
     })
-    ->withSchedule(function (Schedule $schedule): void {
+    ->withSchedule(function ($schedule): void {
         // Update transaction statuses daily at midnight
         $schedule->command('transactions:update-statuses')
             ->daily()
