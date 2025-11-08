@@ -53,6 +53,12 @@ class UpdateTransactionStatuses extends Command
                     $transaction->days_late = $daysLate;
                     $transaction->status = 'delayed';
                     
+                    // Save status first to ensure database is updated
+                    $transaction->save();
+                    
+                    // Refresh from database to get latest status of previous transactions
+                    $transaction->refresh();
+                    
                     // Get consecutive missed days before this transaction
                     $consecutiveMissed = $transaction->getConsecutiveMissedDays();
                     

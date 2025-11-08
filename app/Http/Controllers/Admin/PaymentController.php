@@ -287,10 +287,18 @@ class PaymentController extends Controller
                     $transaction->days_late = $daysLate;
                     $transaction->status = 'delayed';
                     
+                    // Save status first to ensure database is updated
+                    $transaction->save();
+                    
+                    // Refresh from database to get latest status of previous transactions
+                    $transaction->refresh();
+                    
                     // Get consecutive missed days before this transaction
+                    // This counts previous transactions that are not completed
                     $consecutiveMissed = $transaction->getConsecutiveMissedDays();
                     
                     // Only apply late fee after 3 consecutive missed payments
+                    // consecutiveMissed = 4 means 4 consecutive missed, which is the 4th one
                     if ($consecutiveMissed > 3) {
                         $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $consecutiveMissed);
                         $transaction->late_fee = $lateFee > 0 ? round($lateFee, 2) : 0;

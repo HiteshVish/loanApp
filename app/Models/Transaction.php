@@ -66,23 +66,26 @@ class Transaction extends Model
 
     /**
      * Get consecutive missed days count before this transaction
+     * Counts previous transactions that are not completed (pending or delayed)
      */
     public function getConsecutiveMissedDays()
     {
         $consecutiveMissed = 0;
         
         // Get previous transactions ordered by due_date DESC to count backwards
+        // Use fresh query to ensure we get latest status from database
         $previousTransactions = Transaction::where('loan_id', $this->loan_id)
             ->where('due_date', '<', $this->due_date)
             ->orderBy('due_date', 'desc')
             ->get();
         
         // Count consecutive missed transactions before this one
+        // A transaction is "missed" if it's not completed (i.e., pending or delayed)
         foreach ($previousTransactions as $prevTransaction) {
             if ($prevTransaction->status !== 'completed') {
                 $consecutiveMissed++;
             } else {
-                // If we find a completed payment, stop counting
+                // If we find a completed payment, stop counting consecutive missed
                 break;
             }
         }
