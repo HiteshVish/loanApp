@@ -30,53 +30,62 @@ class UpdateTransactionStatuses extends Command
         $this->info('Starting transaction status update...');
 
         // Get all pending and delayed transactions with past due dates
-        // Process both to ensure late fees are recalculated correctly
         $transactions = Transaction::whereIn('status', ['pending', 'delayed'])
             ->where('due_date', '<', Carbon::today(config('app.timezone')))
+            ->where('status', '!=', 'completed')
             ->with('loanDetail')
-            ->orderBy('due_date', 'asc') // Process in chronological order for accurate consecutive counting
+            ->orderBy('due_date', 'asc')
             ->get();
 
+        if ($transactions->isEmpty()) {
+            $this->info('No transactions to update.');
+            return Command::SUCCESS;
+        }
+
+        $today = Carbon::today(config('app.timezone'));
+        $loanAmount = $transactions->first()->loanDetail->loan_amount ?? 0;
         $updatedCount = 0;
 
+        // First pass: Update status and days_late for all transactions
         foreach ($transactions as $transaction) {
-            // Use application timezone for date comparisons
             $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
-            $today = Carbon::today(config('app.timezone'));
             
-            // Only process if due date is actually in the past
             if ($dueDate->lt($today)) {
-                // Calculate days late (positive number for past dates)
-                $daysLate = $dueDate->diffInDays($today, false);
+                // Calculate days late correctly (today - due_date)
+                $daysLate = $today->diffInDays($dueDate, false);
                 
                 if ($daysLate > 0) {
                     $transaction->days_late = $daysLate;
                     $transaction->status = 'delayed';
-                    
-                    // Save status first to ensure database is updated
-                    $transaction->save();
-                    
-                    // Refresh from database to get latest status of previous transactions
-                    $transaction->refresh();
-                    
-                    // Get consecutive missed days before this transaction
-                    $consecutiveMissed = $transaction->getConsecutiveMissedDays();
-                    
-                    // Only apply late fee after 3 consecutive missed payments
-                    // consecutiveMissed = 3 means this is the 4th consecutive missed payment
-                    // (3 previous + current = 4 total)
-                    if ($consecutiveMissed >= 3) {
-                        // Add 1 to include the current transaction in the count
-                        $totalConsecutiveMissed = $consecutiveMissed + 1;
-                        $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $totalConsecutiveMissed);
-                        $transaction->late_fee = $lateFee > 0 ? round($lateFee, 2) : 0;
-                    } else {
-                        $transaction->late_fee = 0;
-                    }
-                    
                     $transaction->save();
                     $updatedCount++;
                 }
+            }
+        }
+
+        // Second pass: Calculate late fees for all delayed transactions
+        foreach ($transactions as $transaction) {
+            if ($transaction->status === 'delayed') {
+                $transaction->refresh();
+                
+                $consecutiveMissed = $transaction->getConsecutiveMissedDays();
+                $totalConsecutiveMissed = $consecutiveMissed + 1;
+                
+                // If we have 4+ consecutive missed payments, apply late fee to ALL of them
+                if ($totalConsecutiveMissed >= 4) {
+                    $effectiveDaysLate = max(0, $transaction->days_late - 3);
+                    
+                    if ($effectiveDaysLate > 0) {
+                        $lateFee = $loanAmount * 0.005 * $effectiveDaysLate;
+                        $transaction->late_fee = round($lateFee, 2);
+                    } else {
+                        $transaction->late_fee = 0;
+                    }
+                } else {
+                    $transaction->late_fee = 0;
+                }
+                
+                $transaction->save();
             }
         }
 
