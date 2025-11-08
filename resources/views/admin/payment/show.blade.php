@@ -143,7 +143,7 @@
                 <div class="col-md-3">
                     <label for="paid_amount" class="form-label">Amount Paid (₹) *</label>
                     <input type="number" step="0.01" class="form-control" id="paid_amount" name="paid_amount" 
-                           placeholder="Enter amount" required readonly>
+                           placeholder="Enter amount" required>
                     @error('paid_amount')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror

@@ -14,6 +14,7 @@ class Transaction extends Model
         'loan_id',
         'user_id',
         'amount',
+        'paid_amount',
         'due_date',
         'paid_date',
         'status',
@@ -24,6 +25,7 @@ class Transaction extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
         'late_fee' => 'decimal:2',
         'due_date' => 'date',
         'paid_date' => 'date',
@@ -105,8 +107,9 @@ class Transaction extends Model
      */
     public function updateStatus()
     {
-        $today = Carbon::today();
-        $dueDate = Carbon::parse($this->due_date)->startOfDay();
+        // Use application timezone for date comparisons
+        $today = Carbon::today(config('app.timezone'));
+        $dueDate = Carbon::parse($this->due_date)->setTimezone(config('app.timezone'))->startOfDay();
         
         if ($this->status === 'completed') {
             return; // Already completed

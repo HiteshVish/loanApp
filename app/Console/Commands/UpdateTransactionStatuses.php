@@ -31,15 +31,16 @@ class UpdateTransactionStatuses extends Command
 
         // Get all pending transactions with past due dates
         $pendingTransactions = Transaction::where('status', 'pending')
-            ->where('due_date', '<', Carbon::today())
+            ->where('due_date', '<', Carbon::today(config('app.timezone')))
             ->with('loanDetail')
             ->get();
 
         $updatedCount = 0;
 
         foreach ($pendingTransactions as $transaction) {
-            $dueDate = Carbon::parse($transaction->due_date)->startOfDay();
-            $today = Carbon::today();
+            // Use application timezone for date comparisons
+            $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
+            $today = Carbon::today(config('app.timezone'));
             
             // Only process if due date is actually in the past
             if ($dueDate->lt($today)) {

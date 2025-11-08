@@ -105,8 +105,10 @@ class PaymentController extends Controller
         $loan->pending_transactions = $loan->transactions->where('status', 'pending')->count();
         $loan->delayed_transactions = $loan->transactions->where('status', 'delayed')->count();
 
-        // Get transaction statistics with calculations
-        $loan->total_paid = $loan->transactions->where('status', 'completed')->sum('amount');
+        // Get transaction statistics with calculations (use paid_amount instead of status)
+        $loan->total_paid = $loan->transactions->sum(function($t) {
+            return $t->paid_amount ?? 0;
+        });
         $loan->total_late_fees_paid = $loan->transactions->where('status', 'completed')->sum('late_fee');
         $loan->remaining_amount = $loan->total_amount_with_interest - $loan->total_paid;
 
@@ -132,23 +134,49 @@ class PaymentController extends Controller
             return back()->with('error', 'Invalid transaction for this loan.');
         }
 
-        // Check if already paid
-        if ($transaction->status === 'completed') {
-            return back()->with('error', 'This transaction has already been paid.');
+        // Check if already fully paid
+        if ($transaction->status === 'completed' && $transaction->paid_amount >= ($transaction->amount + $transaction->late_fee)) {
+            return back()->with('error', 'This transaction has already been fully paid.');
         }
 
-        // Update transaction with payment details
-        $transaction->status = 'completed';
-        $transaction->paid_date = $validated['payment_date'] ?? Carbon::today();
-        $transaction->notes = $validated['notes'] ?? null;
+        $paidAmount = $validated['paid_amount'];
+        $expectedAmount = $transaction->amount + $transaction->late_fee;
+        $existingPaidAmount = $transaction->paid_amount ?? 0;
+        $totalPaidAmount = $existingPaidAmount + $paidAmount;
         
-        // Update amount if partial payment (though we expect full payment)
-        if ($validated['paid_amount'] < ($transaction->amount + $transaction->late_fee)) {
-            $transaction->notes = ($transaction->notes ? $transaction->notes . ' | ' : '') . 
-                                 'Partial payment: ₹' . $validated['paid_amount'] . ' (Expected: ₹' . 
-                                 round($transaction->amount + $transaction->late_fee, 2) . ')';
+        // Update transaction with payment details
+        $transaction->paid_amount = $totalPaidAmount;
+        $transaction->paid_date = $validated['payment_date'] ?? Carbon::today(config('app.timezone'));
+        
+        // Build notes
+        $notes = [];
+        if ($validated['notes']) {
+            $notes[] = $validated['notes'];
         }
         
+        // Handle payment scenarios
+        if ($totalPaidAmount < $expectedAmount) {
+            // PARTIAL PAYMENT - Keep as pending/delayed
+            $remaining = $expectedAmount - $totalPaidAmount;
+            $notes[] = "Partial payment: ₹" . number_format($paidAmount, 2) . " (Remaining: ₹" . number_format($remaining, 2) . ")";
+            $transaction->status = $transaction->status === 'delayed' ? 'delayed' : 'pending';
+            $message = "Partial payment of ₹" . number_format($paidAmount, 2) . " recorded. Remaining: ₹" . number_format($remaining, 2);
+        } elseif ($totalPaidAmount == $expectedAmount) {
+            // FULL PAYMENT - Mark as completed
+            $transaction->status = 'completed';
+            $message = "Full payment of ₹" . number_format($paidAmount, 2) . " recorded successfully!";
+        } else {
+            // OVERPAYMENT - Mark as completed and apply excess to next transaction
+            $excess = $totalPaidAmount - $expectedAmount;
+            $transaction->status = 'completed';
+            $notes[] = "Overpayment: ₹" . number_format($excess, 2) . " (Applied to next transaction)";
+            $message = "Payment of ₹" . number_format($paidAmount, 2) . " recorded. Excess ₹" . number_format($excess, 2) . " applied to next transaction.";
+            
+            // Apply excess to next pending transaction
+            $this->applyExcessToNextTransaction($loanId, $transaction->id, $excess);
+        }
+        
+        $transaction->notes = implode(' | ', $notes);
         $transaction->save();
 
         // Check if loan is completed (all transactions paid)
@@ -157,7 +185,53 @@ class PaymentController extends Controller
             $loan->markAsCompleted();
         }
 
-        return back()->with('success', 'Payment recorded successfully!');
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Apply excess payment to next pending transaction
+     */
+    private function applyExcessToNextTransaction($loanId, $currentTransactionId, $excessAmount)
+    {
+        // Get the current transaction to find its due date
+        $currentTransaction = Transaction::find($currentTransactionId);
+        
+        // Find next pending/delayed transaction after this one
+        $nextTransaction = Transaction::where('loan_id', $loanId)
+            ->where('id', '!=', $currentTransactionId)
+            ->where('due_date', '>', $currentTransaction->due_date)
+            ->whereIn('status', ['pending', 'delayed'])
+            ->orderBy('due_date', 'asc')
+            ->first();
+        
+        if ($nextTransaction) {
+            $existingPaid = $nextTransaction->paid_amount ?? 0;
+            $nextTransaction->paid_amount = $existingPaid + $excessAmount;
+            
+            // Check if this makes it fully paid
+            $expectedAmount = $nextTransaction->amount + $nextTransaction->late_fee;
+            if ($nextTransaction->paid_amount >= $expectedAmount) {
+                $nextTransaction->status = 'completed';
+                $nextTransaction->paid_date = Carbon::today(config('app.timezone'));
+                
+                // If there's still excess, apply to next transaction recursively
+                $remainingExcess = $nextTransaction->paid_amount - $expectedAmount;
+                if ($remainingExcess > 0) {
+                    $nextTransaction->paid_amount = $expectedAmount; // Set to exact amount
+                    $nextTransaction->save();
+                    $this->applyExcessToNextTransaction($loanId, $nextTransaction->id, $remainingExcess);
+                } else {
+                    $nextTransaction->save();
+                }
+            } else {
+                // Still partial, update notes
+                $remaining = $expectedAmount - $nextTransaction->paid_amount;
+                $notes = $nextTransaction->notes ? $nextTransaction->notes . ' | ' : '';
+                $notes .= "Excess from previous payment: ₹" . number_format($excessAmount, 2) . " (Remaining: ₹" . number_format($remaining, 2) . ")";
+                $nextTransaction->notes = $notes;
+                $nextTransaction->save();
+            }
+        }
     }
 
     /**
@@ -184,13 +258,14 @@ class PaymentController extends Controller
     {
         // Get all pending transactions with past due dates
         $pendingTransactions = Transaction::where('status', 'pending')
-            ->where('due_date', '<', Carbon::today())
+            ->where('due_date', '<', Carbon::today(config('app.timezone')))
             ->with('loanDetail')
             ->get();
 
         foreach ($pendingTransactions as $transaction) {
-            $dueDate = Carbon::parse($transaction->due_date)->startOfDay();
-            $today = Carbon::today();
+            // Use application timezone for date comparisons
+            $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
+            $today = Carbon::today(config('app.timezone'));
             
             // Only process if due date is actually in the past
             if ($dueDate->lt($today)) {

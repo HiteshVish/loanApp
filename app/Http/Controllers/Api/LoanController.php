@@ -15,7 +15,7 @@ class LoanController extends Controller
     public function loanDetails(Request $request)
     {
         $validated = $request->validate([
-            'loanAmount' => 'required|numeric|min:1000|max:10000000', // Min 1K, Max 1Cr
+            'loanAmount' => 'required|numeric|min:100|max:10000000', // Min 1K, Max 1Cr
             'tenure' => 'required|integer|min:1|max:60', // Min 1 month, Max 60 months
         ]);
 

@@ -104,10 +104,11 @@ class LoanDetail extends Model
         }
 
         $dailyEMI = $this->calculateDailyEMI();
-        $startDate = $this->created_at->toDateString();
+        // Use application timezone for date calculations
+        $startDate = Carbon::parse($this->created_at)->setTimezone(config('app.timezone'))->toDateString();
         
         for ($i = 0; $i < $this->tenure * 30; $i++) {
-            $dueDate = Carbon::parse($startDate)->addDays($i)->toDateString();
+            $dueDate = Carbon::parse($startDate)->setTimezone(config('app.timezone'))->addDays($i)->toDateString();
             
             Transaction::create([
                 'loan_id' => $this->loan_id,
@@ -120,14 +121,25 @@ class LoanDetail extends Model
     }
 
     /**
-     * Check if loan is completed (all transactions paid)
+     * Check if loan is completed (all transactions fully paid)
      */
     public function isCompleted()
     {
         $totalTransactions = $this->transactions()->count();
-        $completedTransactions = $this->transactions()->where('status', 'completed')->count();
+        if ($totalTransactions === 0) {
+            return false;
+        }
         
-        return $totalTransactions > 0 && $totalTransactions === $completedTransactions;
+        // Check if all transactions are fully paid (paid_amount >= amount + late_fee)
+        foreach ($this->transactions as $transaction) {
+            $expectedAmount = $transaction->amount + $transaction->late_fee;
+            $paidAmount = $transaction->paid_amount ?? 0;
+            if ($paidAmount < $expectedAmount) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**
