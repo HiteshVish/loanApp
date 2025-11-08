@@ -148,11 +148,11 @@
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
                 </div>
-                <div class="col-md-3">
+                <!-- <div class="col-md-3">
                     <label for="payment_date" class="form-label">Payment Date</label>
                     <input type="date" class="form-control" id="payment_date" name="payment_date" 
                            value="{{ date('Y-m-d') }}">
-                </div>
+                </div> -->
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">
