@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Configuration\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,6 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'kyc' => \App\Http\Middleware\CheckKycStatus::class,
         ]);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        // Update transaction statuses daily at midnight
+        $schedule->command('transactions:update-statuses')
+            ->daily()
+            ->at('00:00')
+            ->timezone('Asia/Kolkata'); // Adjust timezone as needed
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle API requests - return JSON instead of redirects

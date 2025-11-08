@@ -106,25 +106,32 @@ class Transaction extends Model
     public function updateStatus()
     {
         $today = Carbon::today();
-        $dueDate = Carbon::parse($this->due_date);
+        $dueDate = Carbon::parse($this->due_date)->startOfDay();
         
         if ($this->status === 'completed') {
             return; // Already completed
         }
         
-        $daysLate = $today->diffInDays($dueDate, false);
-        
-        if ($daysLate > 0) {
-            $this->days_late = $daysLate;
+        // Only mark as delayed if due date is in the past
+        if ($dueDate->lt($today)) {
+            // Calculate days late (positive number for past dates)
+            $daysLate = $dueDate->diffInDays($today, false);
             
-            // Get consecutive missed days before this transaction
-            $consecutiveMissed = $this->getConsecutiveMissedDays();
-            
-            // Calculate late fee based on consecutive missed days
-            $calculatedFee = $this->calculateLateFee($this->loanDetail->loan_amount, $consecutiveMissed);
-            $this->late_fee = $calculatedFee > 0 ? (float)round($calculatedFee, 2) : 0;
-            $this->status = 'delayed';
+            if ($daysLate > 0) {
+                $this->days_late = $daysLate;
+                
+                // Get consecutive missed days before this transaction
+                $consecutiveMissed = $this->getConsecutiveMissedDays();
+                
+                // Calculate late fee based on consecutive missed days
+                $calculatedFee = $this->calculateLateFee($this->loanDetail->loan_amount, $consecutiveMissed);
+                $this->late_fee = $calculatedFee > 0 ? (float)round($calculatedFee, 2) : 0;
+                $this->status = 'delayed';
+            } else {
+                $this->status = 'pending';
+            }
         } else {
+            // Future dates should remain pending
             $this->status = 'pending';
         }
         

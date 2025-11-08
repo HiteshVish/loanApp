@@ -189,26 +189,31 @@ class PaymentController extends Controller
             ->get();
 
         foreach ($pendingTransactions as $transaction) {
-            $dueDate = Carbon::parse($transaction->due_date);
+            $dueDate = Carbon::parse($transaction->due_date)->startOfDay();
             $today = Carbon::today();
-            $daysLate = $today->diffInDays($dueDate, false);
-
-            if ($daysLate > 0) {
-                $transaction->days_late = $daysLate;
-                $transaction->status = 'delayed';
+            
+            // Only process if due date is actually in the past
+            if ($dueDate->lt($today)) {
+                // Calculate days late (positive number for past dates)
+                $daysLate = $dueDate->diffInDays($today, false);
                 
-                // Get consecutive missed days before this transaction
-                $consecutiveMissed = $transaction->getConsecutiveMissedDays();
-                
-                // Only apply late fee after 3 consecutive missed payments
-                if ($consecutiveMissed > 3) {
-                    $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $consecutiveMissed);
-                    $transaction->late_fee = $lateFee > 0 ? round($lateFee, 2) : 0;
-                } else {
-                    $transaction->late_fee = 0;
+                if ($daysLate > 0) {
+                    $transaction->days_late = $daysLate;
+                    $transaction->status = 'delayed';
+                    
+                    // Get consecutive missed days before this transaction
+                    $consecutiveMissed = $transaction->getConsecutiveMissedDays();
+                    
+                    // Only apply late fee after 3 consecutive missed payments
+                    if ($consecutiveMissed > 3) {
+                        $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $consecutiveMissed);
+                        $transaction->late_fee = $lateFee > 0 ? round($lateFee, 2) : 0;
+                    } else {
+                        $transaction->late_fee = 0;
+                    }
+                    
+                    $transaction->save();
                 }
-                
-                $transaction->save();
             }
         }
     }

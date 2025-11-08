@@ -27,7 +27,7 @@ class LoanController extends Controller
             'user_id' => $userId,
             'loan_amount' => $validated['loanAmount'],
             'tenure' => $validated['tenure'],
-            'status' => 'approved', // Auto-approve for now
+            'status' => 'pending', // Auto-approve for now
         ]);
 
         return response()->json([
