@@ -73,10 +73,10 @@
                     </td>
                     <td>
                         <div class="dropdown">
-                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bx bx-dots-vertical-rounded"></i>
                             </button>
-                            <div class="dropdown-menu">
+                            <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="{{ route('admin.users.show', $user) }}">
                                     <i class="bx bx-show me-1"></i> View More
                                 </a>
@@ -130,6 +130,52 @@
         </p>
     </div>
 </div>
+
+@push('styles')
+<style>
+    /* Fix dropdown menu being clipped by card/table */
+    /* Allow overflow-y for dropdowns while keeping horizontal scroll */
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+    
+    /* Ensure card doesn't clip dropdowns */
+    .card {
+        overflow-x: hidden;
+        overflow-y: visible;
+    }
+    
+    /* Ensure dropdown menu appears above everything */
+    .dropdown-menu {
+        z-index: 1050 !important;
+    }
+    
+    /* Make sure table cells allow dropdown overflow */
+    .table td {
+        position: relative;
+        overflow: visible;
+    }
+    
+    /* Ensure dropdown container has proper positioning */
+    .table .dropdown {
+        position: static;
+    }
+    
+    /* For Bootstrap 5, ensure dropdown menu is positioned correctly */
+    .table-responsive .dropdown-menu {
+        position: absolute !important;
+        right: 0;
+        left: auto;
+        margin-top: 0.125rem;
+    }
+    
+    /* Ensure table body doesn't clip */
+    .table tbody {
+        overflow: visible;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

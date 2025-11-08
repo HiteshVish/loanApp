@@ -43,6 +43,17 @@ class DashboardController extends Controller
                 ]
             ]);
         }
+        // If latest loan is pending
+        if ($latestLoan->status === 'completed') {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'status' => 'completed',
+                    'message' => 'Loan has been paid off',
+                    'application_submitted_date' => $latestLoan->created_at->format('Y-m-d H:i:s')
+                ]
+            ]);
+        }
 
         // If latest loan is approved/running
         if ($latestLoan->status === 'approved') {

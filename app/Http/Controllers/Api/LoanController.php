@@ -89,7 +89,8 @@ class LoanController extends Controller
 
         // Calculate statistics
         $totalApplications = $loans->count();
-        $approvedApplications = $loans->where('status', 'approved')->count();
+        $approvedApplications = $loans->whereIn('status', ['approved', 'completed'])->count();
+        // $completedApplications = $loans->where('status', 'completed')->count();
         $totalAmount = $loans->sum('loan_amount');
         $successRate = $totalApplications > 0 ? round(($approvedApplications / $totalApplications) * 100, 2) : 0;
 

@@ -258,21 +258,32 @@
         <div class="card mb-4">
             <h5 class="card-header">KYC Documents</h5>
             <div class="card-body">
+                <h6 class="mb-3">Uploaded Documents</h6>
                 <div class="row">
-                    <div class="col-md-6 mb-2">
-                        <strong>Aadhar Number:</strong> {{ $userDetail && $userDetail->aadhar ? $userDetail->aadhar : 'N/A' }}
-                    </div>
-                    <div class="col-md-6 mb-2">
-                        <strong>PAN Number:</strong> {{ $userDetail && $userDetail->pan ? $userDetail->pan : 'N/A' }}
-                    </div>
-                </div>
-                <h6 class="mt-3 mb-3">Uploaded Documents</h6>
-                <div class="row">
-                    @if($userDetail && $userDetail->photo)
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ Storage::url($userDetail->photo) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="bx bx-image"></i> Photo
+                    @if($userDetail && $userDetail->aadhar)
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ Storage::url($userDetail->aadhar) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bx bx-file"></i> View Aadhar
                         </a>
+                    </div>
+                    @endif
+                    @if($userDetail && $userDetail->pan)
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ Storage::url($userDetail->pan) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bx bx-file"></i> View PAN
+                        </a>
+                    </div>
+                    @endif
+                    @if($userDetail && $userDetail->photo)
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ Storage::url($userDetail->photo) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bx bx-image"></i> View Photo
+                        </a>
+                    </div>
+                    @endif
+                    @if((!$userDetail || (!$userDetail->aadhar && !$userDetail->pan && !$userDetail->photo)))
+                    <div class="col-12">
+                        <p class="text-muted text-center mb-0">No documents uploaded yet</p>
                     </div>
                     @endif
                 </div>

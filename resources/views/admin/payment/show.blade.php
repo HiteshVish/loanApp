@@ -140,7 +140,7 @@
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label for="paid_amount" class="form-label">Amount Paid (₹) *</label>
                     <input type="number" step="0.01" class="form-control" id="paid_amount" name="paid_amount" 
                            placeholder="Enter amount" required>
@@ -153,7 +153,7 @@
                     <input type="date" class="form-control" id="payment_date" name="payment_date" 
                            value="{{ date('Y-m-d') }}">
                 </div> -->
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="bx bx-check"></i> Record Payment
