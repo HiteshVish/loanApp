@@ -53,7 +53,8 @@ class UpdateTransactionStatuses extends Command
             
             if ($dueDate->lt($today)) {
                 // Calculate days late correctly (today - due_date)
-                $daysLate = $today->diffInDays($dueDate, false);
+                // Use $dueDate->diffInDays($today) to get positive days when due_date is in the past
+                $daysLate = $dueDate->diffInDays($today, false);
                 
                 if ($daysLate > 0) {
                     $transaction->days_late = $daysLate;
