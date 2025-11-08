@@ -63,8 +63,12 @@ class UpdateTransactionStatuses extends Command
                     $consecutiveMissed = $transaction->getConsecutiveMissedDays();
                     
                     // Only apply late fee after 3 consecutive missed payments
-                    if ($consecutiveMissed > 3) {
-                        $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $consecutiveMissed);
+                    // consecutiveMissed = 3 means this is the 4th consecutive missed payment
+                    // (3 previous + current = 4 total)
+                    if ($consecutiveMissed >= 3) {
+                        // Add 1 to include the current transaction in the count
+                        $totalConsecutiveMissed = $consecutiveMissed + 1;
+                        $lateFee = $transaction->calculateLateFee($transaction->loanDetail->loan_amount, $totalConsecutiveMissed);
                         $transaction->late_fee = $lateFee > 0 ? round($lateFee, 2) : 0;
                     } else {
                         $transaction->late_fee = 0;
