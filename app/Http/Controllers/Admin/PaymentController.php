@@ -144,33 +144,42 @@ class PaymentController extends Controller
         $existingPaidAmount = $transaction->paid_amount ?? 0;
         $totalPaidAmount = $existingPaidAmount + $paidAmount;
         
-        // Update transaction with payment details
-        $transaction->paid_amount = $totalPaidAmount;
-        $transaction->paid_date = $validated['payment_date'] ?? Carbon::today(config('app.timezone'));
-        
-        // Build notes
+        // Build notes - preserve existing notes
         $notes = [];
+        if ($transaction->notes) {
+            $notes[] = $transaction->notes;
+        }
         if ($validated['notes']) {
             $notes[] = $validated['notes'];
         }
+        
+        // Update transaction with payment details
+        $transaction->paid_date = $validated['payment_date'] ?? Carbon::today(config('app.timezone'));
         
         // Handle payment scenarios
         if ($totalPaidAmount < $expectedAmount) {
             // PARTIAL PAYMENT - Keep as pending/delayed
             $remaining = $expectedAmount - $totalPaidAmount;
-            $notes[] = "Partial payment: ₹" . number_format($paidAmount, 2) . " (Remaining: ₹" . number_format($remaining, 2) . ")";
+            $notes[] = "Payment: ₹" . number_format($paidAmount, 2) . " (Total paid: ₹" . number_format($totalPaidAmount, 2) . ", Remaining: ₹" . number_format($remaining, 2) . ")";
+            $transaction->paid_amount = $totalPaidAmount;
             $transaction->status = $transaction->status === 'delayed' ? 'delayed' : 'pending';
-            $message = "Partial payment of ₹" . number_format($paidAmount, 2) . " recorded. Remaining: ₹" . number_format($remaining, 2);
+            $message = "Partial payment of ₹" . number_format($paidAmount, 2) . " recorded. Total paid: ₹" . number_format($totalPaidAmount, 2) . ", Remaining: ₹" . number_format($remaining, 2);
         } elseif ($totalPaidAmount == $expectedAmount) {
             // FULL PAYMENT - Mark as completed
+            $transaction->paid_amount = $expectedAmount;
             $transaction->status = 'completed';
+            if ($existingPaidAmount > 0) {
+                $notes[] = "Payment: ₹" . number_format($paidAmount, 2) . " (Total: ₹" . number_format($totalPaidAmount, 2) . " - Full payment completed)";
+            }
             $message = "Full payment of ₹" . number_format($paidAmount, 2) . " recorded successfully!";
         } else {
             // OVERPAYMENT - Mark as completed and apply excess to next transaction
             $excess = $totalPaidAmount - $expectedAmount;
+            // Set paid_amount to exactly the expected amount (not the total paid)
+            $transaction->paid_amount = $expectedAmount;
             $transaction->status = 'completed';
-            $notes[] = "Overpayment: ₹" . number_format($excess, 2) . " (Applied to next transaction)";
-            $message = "Payment of ₹" . number_format($paidAmount, 2) . " recorded. Excess ₹" . number_format($excess, 2) . " applied to next transaction.";
+            $notes[] = "Payment: ₹" . number_format($paidAmount, 2) . " (Total: ₹" . number_format($totalPaidAmount, 2) . ", Overpayment: ₹" . number_format($excess, 2) . " applied to next transaction)";
+            $message = "Payment of ₹" . number_format($paidAmount, 2) . " recorded. Total paid: ₹" . number_format($totalPaidAmount, 2) . ". Excess ₹" . number_format($excess, 2) . " applied to next transaction.";
             
             // Apply excess to next pending transaction
             $this->applyExcessToNextTransaction($loanId, $transaction->id, $excess);
