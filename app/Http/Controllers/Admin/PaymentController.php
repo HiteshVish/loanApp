@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LoanDetail;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class PaymentController extends Controller
@@ -266,22 +267,32 @@ class PaymentController extends Controller
     private function updateTransactionStatuses()
     {
         $today = Carbon::today(config('app.timezone'));
+        $todayString = $today->toDateString(); // Convert to Y-m-d format for database comparison
         
         // Get all pending and delayed transactions with past due dates
         // Process both to ensure late fees are recalculated correctly
         $transactions = Transaction::whereIn('status', ['pending', 'delayed'])
-            ->where('due_date', '<', $today)
-            ->where('status', '!=', 'completed')
+            ->where('due_date', '<', $todayString)
             ->with('loanDetail')
             ->orderBy('loan_id', 'asc')
             ->orderBy('due_date', 'asc') // Process in chronological order for accurate consecutive counting
             ->get();
 
         if ($transactions->isEmpty()) {
+            \Log::info('No transactions found to update', [
+                'today' => $todayString,
+                'count' => Transaction::whereIn('status', ['pending', 'delayed'])->count()
+            ]);
             return;
         }
 
+        \Log::info('Found transactions to update', [
+            'count' => $transactions->count(),
+            'today' => $todayString
+        ]);
+
         // First pass: Update status and days_late for all transactions
+        $updatedCount = 0;
         foreach ($transactions as $transaction) {
             $dueDate = Carbon::parse($transaction->due_date)->setTimezone(config('app.timezone'))->startOfDay();
             
@@ -293,28 +304,56 @@ class PaymentController extends Controller
                     $transaction->days_late = $daysLate;
                     $transaction->status = 'delayed';
                     $transaction->save();
+                    $updatedCount++;
+                    
+                    \Log::info('Updated transaction to delayed', [
+                        'transaction_id' => $transaction->id,
+                        'loan_id' => $transaction->loan_id,
+                        'due_date' => $transaction->due_date,
+                        'days_late' => $daysLate
+                    ]);
                 }
             }
         }
+        
+        Log::info('First pass completed', ['updated_count' => $updatedCount]);
 
-        // Second pass: Process each loan separately to calculate late fees
-        // Group transactions by loan_id
-        $transactionsByLoan = $transactions->groupBy('loan_id');
+        // Second pass: Re-fetch ALL delayed transactions after status updates
+        // This ensures we get all loans that have delayed transactions, not just the ones from the original query
+        $allDelayedTransactions = Transaction::where('status', 'delayed')
+            ->where('due_date', '<', $todayString)
+            ->with('loanDetail')
+            ->orderBy('loan_id', 'asc')
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        if ($allDelayedTransactions->isEmpty()) {
+            Log::info('No delayed transactions found after first pass');
+            return;
+        }
+
+        Log::info('Found delayed transactions for late fee calculation', [
+            'count' => $allDelayedTransactions->count()
+        ]);
+
+        // Group delayed transactions by loan_id
+        $transactionsByLoan = $allDelayedTransactions->groupBy('loan_id');
         
         foreach ($transactionsByLoan as $loanId => $loanTransactions) {
-            // Re-fetch delayed transactions for this loan to get fresh data
-            $delayedTransactions = Transaction::where('loan_id', $loanId)
-                ->where('status', 'delayed')
-                ->where('due_date', '<', $today)
-                ->with('loanDetail')
-                ->orderBy('due_date', 'asc')
-                ->get();
+            $delayedTransactions = $loanTransactions;
 
             if ($delayedTransactions->isEmpty()) {
+                Log::info('No delayed transactions found for loan', ['loan_id' => $loanId]);
                 continue;
             }
 
             $loanAmount = $delayedTransactions->first()->loanDetail->loan_amount ?? 0;
+            
+            Log::info('Processing delayed transactions for loan', [
+                'loan_id' => $loanId,
+                'loan_amount' => $loanAmount,
+                'delayed_count' => $delayedTransactions->count()
+            ]);
 
             // Check if we have 4+ consecutive missed payments (crossed the 3-day deadline)
             $maxConsecutiveMissed = 0;
@@ -323,6 +362,11 @@ class PaymentController extends Controller
                 $totalConsecutiveMissed = $consecutiveMissed + 1;
                 $maxConsecutiveMissed = max($maxConsecutiveMissed, $totalConsecutiveMissed);
             }
+            
+            Log::info('Consecutive missed calculation', [
+                'loan_id' => $loanId,
+                'max_consecutive_missed' => $maxConsecutiveMissed
+            ]);
 
             // Calculate late fees for all delayed transactions in this loan
             // Logic: If 4+ consecutive missed days, late fee applies to ALL delayed transactions
@@ -343,6 +387,13 @@ class PaymentController extends Controller
                     // When paying, sum all: 0.5% + 0.5% + 0.5% + 0.5% = 2.0%
                     $lateFee = $loanAmount * 0.005; // Flat 0.5% per transaction
                     $transaction->late_fee = round($lateFee, 2);
+                    
+                    Log::info('Applied late fee to transaction', [
+                        'transaction_id' => $transaction->id,
+                        'loan_id' => $loanId,
+                        'late_fee' => $transaction->late_fee,
+                        'max_consecutive_missed' => $maxConsecutiveMissed
+                    ]);
                 } else {
                     // Paid within 3-day grace period (or on 3rd day), no late fee
                     $transaction->late_fee = 0;
@@ -351,6 +402,8 @@ class PaymentController extends Controller
                 $transaction->save();
             }
         }
+        
+        Log::info('Transaction status update completed');
     }
 }
 

@@ -30,11 +30,11 @@ class UpdateTransactionStatuses extends Command
         $this->info('Starting transaction status update...');
 
         $today = Carbon::today(config('app.timezone'));
+        $todayString = $today->toDateString(); // Convert to Y-m-d format for database comparison
         
         // Get all pending and delayed transactions with past due dates
         $transactions = Transaction::whereIn('status', ['pending', 'delayed'])
-            ->where('due_date', '<', $today)
-            ->where('status', '!=', 'completed')
+            ->where('due_date', '<', $todayString)
             ->with('loanDetail')
             ->orderBy('loan_id', 'asc')
             ->orderBy('due_date', 'asc')
@@ -64,17 +64,24 @@ class UpdateTransactionStatuses extends Command
             }
         }
 
-        // Second pass: Process each loan separately to calculate late fees
-        $transactionsByLoan = $transactions->groupBy('loan_id');
+        // Second pass: Re-fetch ALL delayed transactions after status updates
+        $allDelayedTransactions = Transaction::where('status', 'delayed')
+            ->where('due_date', '<', $todayString)
+            ->with('loanDetail')
+            ->orderBy('loan_id', 'asc')
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        if ($allDelayedTransactions->isEmpty()) {
+            $this->info('No delayed transactions found after first pass.');
+            return Command::SUCCESS;
+        }
+
+        // Group delayed transactions by loan_id
+        $transactionsByLoan = $allDelayedTransactions->groupBy('loan_id');
         
         foreach ($transactionsByLoan as $loanId => $loanTransactions) {
-            // Re-fetch delayed transactions for this loan to get fresh data
-            $delayedTransactions = Transaction::where('loan_id', $loanId)
-                ->where('status', 'delayed')
-                ->where('due_date', '<', $today)
-                ->with('loanDetail')
-                ->orderBy('due_date', 'asc')
-                ->get();
+            $delayedTransactions = $loanTransactions;
 
             if ($delayedTransactions->isEmpty()) {
                 continue;
