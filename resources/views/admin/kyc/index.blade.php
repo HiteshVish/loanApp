@@ -157,22 +157,17 @@
                         @endif
                     </td>
                     <td>
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="{{ route('admin.kyc.show', $loan) }}">
-                                    <i class="bx bx-show me-1"></i> Review
-                                </a>
-                                <form action="{{ route('admin.kyc.destroy', $loan) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this loan?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bx bx-trash me-1"></i> Delete
-                                    </button>
-                                </form>
-                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-sm btn-label-primary" title="Review">
+                                <i class="bx bx-show"></i>
+                            </a>
+                            <form action="{{ route('admin.kyc.destroy', $loan) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this loan?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-label-danger" title="Delete">
+                                    <i class="bx bx-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>

@@ -72,35 +72,30 @@
                         @endif
                     </td>
                     <td>
-                        <div class="dropdown">
-                            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('admin.users.show', $user) }}">
-                                    <i class="bx bx-show me-1"></i> View More
-                                </a>
-                                <a class="dropdown-item" href="{{ route('admin.users.edit', $user) }}">
-                                    <i class="bx bx-edit-alt me-1"></i> Edit
-                                </a>
-                                @if(!$user->email_verified_at)
-                                <form action="{{ route('admin.users.verify-email', $user) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item text-success">
-                                        <i class="bx bx-check-shield me-1"></i> Verify Email
-                                    </button>
-                                </form>
-                                @endif
-                                @if($user->id !== auth()->id())
-                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="bx bx-trash me-1"></i> Delete
-                                    </button>
-                                </form>
-                                @endif
-                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm btn-label-primary" title="View More">
+                                <i class="bx bx-show"></i>
+                            </a>
+                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-label-info" title="Edit">
+                                <i class="bx bx-edit-alt"></i>
+                            </a>
+                            @if(!$user->email_verified_at)
+                            <form action="{{ route('admin.users.verify-email', $user) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-label-success" title="Verify Email">
+                                    <i class="bx bx-check-shield"></i>
+                                </button>
+                            </form>
+                            @endif
+                            @if($user->id !== auth()->id())
+                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-label-danger" title="Delete">
+                                    <i class="bx bx-trash"></i>
+                                </button>
+                            </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -131,51 +126,6 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-    /* Fix dropdown menu being clipped by card/table */
-    /* Allow overflow-y for dropdowns while keeping horizontal scroll */
-    .table-responsive {
-        overflow-x: auto;
-        overflow-y: visible;
-    }
-    
-    /* Ensure card doesn't clip dropdowns */
-    .card {
-        overflow-x: hidden;
-        overflow-y: visible;
-    }
-    
-    /* Ensure dropdown menu appears above everything */
-    .dropdown-menu {
-        z-index: 1050 !important;
-    }
-    
-    /* Make sure table cells allow dropdown overflow */
-    .table td {
-        position: relative;
-        overflow: visible;
-    }
-    
-    /* Ensure dropdown container has proper positioning */
-    .table .dropdown {
-        position: static;
-    }
-    
-    /* For Bootstrap 5, ensure dropdown menu is positioned correctly */
-    .table-responsive .dropdown-menu {
-        position: absolute !important;
-        right: 0;
-        left: auto;
-        margin-top: 0.125rem;
-    }
-    
-    /* Ensure table body doesn't clip */
-    .table tbody {
-        overflow: visible;
-    }
-</style>
-@endpush
 
 @push('scripts')
 <script>

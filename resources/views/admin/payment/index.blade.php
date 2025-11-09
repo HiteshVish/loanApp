@@ -178,18 +178,13 @@
                         </div>
                     </td>
                     <td>
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                <i class="bx bx-dots-vertical-rounded"></i>
-                            </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="{{ route('admin.payment.show', $loan->loan_id) }}">
-                                    <i class="bx bx-show me-1"></i> View Payment Details
-                                </a>
-                                <a class="dropdown-item" href="{{ route('admin.kyc.show', $loan) }}">
-                                    <i class="bx bx-detail me-1"></i> View Loan Details
-                                </a>
-                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('admin.payment.show', $loan->loan_id) }}" class="btn btn-sm btn-label-primary" title="View Payment Details">
+                                <i class="bx bx-money"></i>
+                            </a>
+                            <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-sm btn-label-info" title="View Loan Details">
+                                <i class="bx bx-detail"></i>
+                            </a>
                         </div>
                     </td>
                 </tr>

@@ -155,29 +155,24 @@
                             <td class="text-danger">₹{{ number_format($loan->remaining_amount, 2) }}</td>
                             <td>{{ $loan->created_at->format('M d, Y') }}</td>
                             <td>
-                                <div class="dropdown">
-                                    <button type="button" class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
-                                        <i class="bx bx-dots-vertical-rounded"></i>
-                                    </button>
-                                    <div class="dropdown-menu">
-                                        @if($loan->status === 'approved')
-                                            <a class="dropdown-item" href="{{ route('admin.payment.show', $loan->loan_id) }}">
-                                                <i class="bx bx-money me-1"></i> View Payments
-                                            </a>
-                                        @endif
-                                        <a class="dropdown-item" href="{{ route('admin.kyc.show', $loan) }}">
-                                            <i class="bx bx-detail me-1"></i> Loan Details
+                                <div class="d-flex gap-2">
+                                    @if($loan->status === 'approved')
+                                        <a href="{{ route('admin.payment.show', $loan->loan_id) }}" class="btn btn-sm btn-label-primary" title="View Payments">
+                                            <i class="bx bx-money"></i>
                                         </a>
-                                        @if($loan->status === 'approved')
-                                            <form action="{{ route('admin.loan.complete', $loan->loan_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to mark this loan as completed?');">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="dropdown-item text-primary">
-                                                    <i class="bx bx-check me-1"></i> Mark as Completed
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
+                                    @endif
+                                    <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-sm btn-label-info" title="Loan Details">
+                                        <i class="bx bx-detail"></i>
+                                    </a>
+                                    @if($loan->status === 'approved')
+                                        <form action="{{ route('admin.loan.complete', $loan->loan_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to mark this loan as completed?');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-label-success" title="Mark as Completed">
+                                                <i class="bx bx-check"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
