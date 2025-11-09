@@ -151,8 +151,15 @@
                                 </div>
                             @endif
                             <div>
-                                <strong>{{ $name }}</strong>
-                                <br><small class="text-muted">{{ $email }}</small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>{{ $name }}</strong>
+                                    @if($loan->delayed_transactions >= 3)
+                                        <span class="badge bg-danger">Payment Delayed</span>
+                                    @endif
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted">{{ $email }}</small>
+                                </div>
                             </div>
                         </div>
                     </td>
