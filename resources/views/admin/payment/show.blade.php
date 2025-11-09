@@ -155,8 +155,14 @@
                 </div> -->
                 <div class="col-md-4">
                     <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bx bx-check"></i> Record Payment
+                    <button type="submit" class="btn btn-primary w-100" id="recordPaymentBtn">
+                        <span class="btn-text">
+                            <i class="bx bx-check"></i> Record Payment
+                        </span>
+                        <span class="btn-loader d-none">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Processing...
+                        </span>
                     </button>
                 </div>
             </div>
@@ -296,6 +302,52 @@
     </div>
 </div>
 
+@push('styles')
+<style>
+    /* Loading overlay */
+    .payment-loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .payment-loading-overlay.show {
+        display: flex;
+    }
+    
+    .payment-loader {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .payment-loader .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+    
+    .payment-loader h5 {
+        margin-top: 1rem;
+        color: #333;
+    }
+    
+    .payment-loader p {
+        color: #666;
+        margin-bottom: 0;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
     // Auto-fill payment amount when date is selected
@@ -330,8 +382,45 @@
             }, 2000);
         });
     });
+
+    // Handle form submission - show loader
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('recordPaymentBtn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        const loadingOverlay = document.getElementById('paymentLoadingOverlay');
+        
+        // Validate form
+        const transactionId = document.getElementById('transaction_id').value;
+        const paidAmount = document.getElementById('paid_amount').value;
+        
+        if (!transactionId || !paidAmount) {
+            return; // Let browser validation handle it
+        }
+        
+        // Show loader on button
+        btnText.classList.add('d-none');
+        btnLoader.classList.remove('d-none');
+        submitBtn.disabled = true;
+        
+        // Show full-page overlay
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('show');
+        }
+    });
 </script>
 @endpush
+
+<!-- Loading Overlay -->
+<div class="payment-loading-overlay" id="paymentLoadingOverlay">
+    <div class="payment-loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="mt-3">Processing Payment...</h5>
+        <p>Please wait while we record your payment</p>
+    </div>
+</div>
 
 @endsection
 
