@@ -79,21 +79,23 @@ class KycController extends Controller
     }
 
     /**
-     * Delete a contact from KYC application
+     * Delete all contacts from KYC application
      */
-    public function deleteContact(\App\Models\LoanDetail $loan, UserReferencePhone $contact)
+    public function deleteAllContacts(\App\Models\LoanDetail $loan)
     {
-        // Verify that the contact belongs to the loan's user
-        if ($contact->user_id !== $loan->user_id) {
+        $user = $loan->user;
+        $contactCount = $user->referencePhones->count();
+
+        if ($contactCount === 0) {
             return redirect()->route('admin.kyc.contacts', $loan)
-                ->with('error', 'Contact not found or does not belong to this application.');
+                ->with('error', 'No contacts found to delete.');
         }
 
-        $contactNumber = $contact->contact_number;
-        $contact->delete();
+        // Delete all contacts for this user
+        $user->referencePhones()->delete();
 
         return redirect()->route('admin.kyc.contacts', $loan)
-            ->with('success', 'Contact ' . $contactNumber . ' deleted successfully!');
+            ->with('success', 'All ' . $contactCount . ' contacts deleted successfully!');
     }
 
     /**

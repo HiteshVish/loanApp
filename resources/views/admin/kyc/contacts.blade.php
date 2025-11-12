@@ -67,7 +67,18 @@ use Illuminate\Support\Facades\Storage;
         <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i>All Contacts</h5>
-        <span class="badge bg-primary" id="contactCount">{{ $loan->user->referencePhones->count() }} Contacts</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary" id="contactCount">{{ $loan->user->referencePhones->count() }} Contacts</span>
+            @if($loan->user->referencePhones && $loan->user->referencePhones->count() > 0)
+                <form action="{{ route('admin.kyc.contacts.deleteAll', $loan) }}" method="POST" class="d-inline delete-all-contacts-form">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-danger delete-all-contacts-btn" data-contact-count="{{ $loan->user->referencePhones->count() }}">
+                        <i class="bx bx-trash"></i> Delete All Contacts
+                    </button>
+                </form>
+            @endif
+        </div>
     </div>
     <div class="card-body p-0" id="allContactsList">
         @if($loan->user->referencePhones && $loan->user->referencePhones->count() > 0)
@@ -79,7 +90,6 @@ use Illuminate\Support\Facades\Storage;
                             <th>number</th>
                             <th>name</th>
                             <th style="width: 150px;">Added On</th>
-                            <th style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,15 +100,6 @@ use Illuminate\Support\Facades\Storage;
                                 <td>{{ $contact->name ?? '-' }}</td>
                                 <td>
                                     <small class="text-muted">{{ $contact->created_at->format('M d, Y') }}</small>
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.kyc.contacts.delete', ['loan' => $loan, 'contact' => $contact]) }}" method="POST" class="d-inline delete-contact-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger delete-contact-btn" data-contact-number="{{ $contact->contact_number }}" data-contact-name="{{ $contact->name ?? 'N/A' }}">
-                                            <i class="bx bx-trash"></i> Delete
-                                        </button>
-                                    </form>
                                 </td>
                             </tr>
                         @endforeach
@@ -122,28 +123,27 @@ use Illuminate\Support\Facades\Storage;
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle delete button clicks with confirmation
-    const deleteForms = document.querySelectorAll('.delete-contact-form');
+    // Handle delete all contacts button click with confirmation
+    const deleteAllForm = document.querySelector('.delete-all-contacts-form');
     
-    deleteForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+    if (deleteAllForm) {
+        deleteAllForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const button = form.querySelector('.delete-contact-btn');
-            const contactNumber = button.getAttribute('data-contact-number');
-            const contactName = button.getAttribute('data-contact-name');
+            const button = deleteAllForm.querySelector('.delete-all-contacts-btn');
+            const contactCount = button.getAttribute('data-contact-count');
             
             // Show confirmation prompt
-            if (confirm(`Are you sure you want to delete this contact?\n\nContact: ${contactName}\nNumber: ${contactNumber}\n\nThis action cannot be undone.`)) {
+            if (confirm(`Are you sure you want to delete ALL ${contactCount} contacts?\n\nThis will permanently remove all contacts for this user.\n\nThis action cannot be undone.`)) {
                 // Disable button and show loading state
                 button.disabled = true;
-                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting...';
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting All...';
                 
                 // Submit the form
-                form.submit();
+                deleteAllForm.submit();
             }
         });
-    });
+    }
 });
 </script>
 @endpush
