@@ -98,19 +98,19 @@ class DashboardController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
         $startOfDay = Carbon::today()->startOfDay();
         
-        // Daily collection
+        // Daily collection - use paid_amount (actual amount collected)
         $dailyCollection = Transaction::where('status', 'completed')
             ->whereDate('paid_date', $today)
-            ->sum('amount');
+            ->sum('paid_amount');
         
-        // Monthly collection  
+        // Monthly collection - use paid_amount (actual amount collected)
         $monthlyCollection = Transaction::where('status', 'completed')
             ->whereDate('paid_date', '>=', $startOfMonth)
-            ->sum('amount');
+            ->sum('paid_amount');
         
-        // Total collection (all time)
+        // Total collection (all time) - use paid_amount (actual amount collected)
         $totalCollection = Transaction::where('status', 'completed')
-            ->sum('amount');
+            ->sum('paid_amount');
         
         // Late fees collected
         $dailyLateFees = Transaction::where('status', 'completed')
@@ -126,9 +126,13 @@ class DashboardController extends Controller
             ->where('due_date', '<', $today)
             ->count();
         
+        // Pending payment amount should include late fees
         $pendingPaymentAmount = Transaction::where('status', 'pending')
             ->where('due_date', '<', $today)
-            ->sum('amount');
+            ->get()
+            ->sum(function($t) {
+                return $t->amount + ($t->late_fee ?? 0);
+            });
         
         // Delayed payments
         $delayedPayments = Transaction::where('status', 'delayed')
