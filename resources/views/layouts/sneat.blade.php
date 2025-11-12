@@ -45,7 +45,7 @@
                 <div class="app-brand demo">
                     <a href="{{ route('dashboard') }}" class="app-brand-link">
                         <span class="app-brand-logo demo">
-                            <img src="{{ asset('assets/ddfc.png') }}" alt="DDFC Logo" style="height: 40px; width: auto;">
+                            <img src="{{ url('storage/app/public/assets/ddfc.png') }}" alt="DDFC Logo" style="height: 40px; width: auto;">
                         </span>
                     </a>
 

@@ -335,13 +335,13 @@
         <div class="container">
             <div class="app-info">
                 <div class="app-icon">
-                    <img src="{{ asset('assets/ddfc2.png') }}" alt="lapp Icon">
+                    <img src="{{ url('storage/app/public/assets/ddfc2.png') }}" alt="lapp Icon">
                 </div>
                 <div class="app-details">
                     <h1 class="app-title">lapp</h1>
                     <p class="app-tagline">Quick and easy loan application</p>
                     <p class="app-developer">Developed by Sofftsolution technology</p>
-                    <a href="{{ asset('assets/app-release.apk') }}" class="download-btn" download="lapp.apk">
+                    <a href="{{ url('storage/app/public/assets/app-release.apk') }}" class="download-btn" download="lapp.apk">
                         <i class="material-icons">file_download</i>
                         Download APK (49.3 MB)
                     </a>
@@ -373,16 +373,16 @@
             <h2 class="section-title">Screenshots</h2>
             <div class="screenshots">
                 <div class="screenshot">
-                    <img src="{{ asset('assets/img1.jpeg') }}" alt="Screenshot 1">
+                    <img src="{{ url('storage/app/public/assets/img1.jpeg') }}" alt="Screenshot 1">
                 </div>
                 <div class="screenshot">
-                    <img src="{{ asset('assets/img2.jpeg') }}" alt="Screenshot 2">
+                    <img src="{{ url('storage/app/public/assets/img2.jpeg') }}" alt="Screenshot 2">
                 </div>
                 <div class="screenshot">
-                    <img src="{{ asset('assets/img3.jpeg') }}" alt="Screenshot 3">
+                    <img src="{{ url('storage/app/public/assets/img3.jpeg') }}" alt="Screenshot 3">
                 </div>
                 <div class="screenshot">
-                    <img src="{{ asset('assets/img4.jpeg') }}" alt="Screenshot 4">
+                    <img src="{{ url('storage/app/public/assets/img4.jpeg') }}" alt="Screenshot 4">
                 </div>
             </div>
         </section>

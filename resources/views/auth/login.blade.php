@@ -48,7 +48,7 @@
                         <div class="app-brand justify-content-center">
                             <a href="{{ url('/') }}" class="app-brand-link gap-2">
                                 <span class="app-brand-logo demo">
-                                    <img src="{{ asset('assets/ddfc.png') }}" alt="DDFC Logo" style="height: 50px; width: auto;">
+                                    <img src="{{ url('storage/app/public/assets/ddfc.png') }}" alt="DDFC Logo" style="height: 50px; width: auto;">
                                 </span>
                             </a>
                         </div>
