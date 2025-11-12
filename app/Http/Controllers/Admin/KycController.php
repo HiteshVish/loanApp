@@ -7,6 +7,7 @@ use App\Models\KycApplication;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\LoanDetail;
+use App\Models\UserReferencePhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -75,6 +76,24 @@ class KycController extends Controller
     {
         $loan->load(['user', 'user.referencePhones']);
         return view('admin.kyc.contacts', ['loan' => $loan]);
+    }
+
+    /**
+     * Delete a contact from KYC application
+     */
+    public function deleteContact(\App\Models\LoanDetail $loan, UserReferencePhone $contact)
+    {
+        // Verify that the contact belongs to the loan's user
+        if ($contact->user_id !== $loan->user_id) {
+            return redirect()->route('admin.kyc.contacts', $loan)
+                ->with('error', 'Contact not found or does not belong to this application.');
+        }
+
+        $contactNumber = $contact->contact_number;
+        $contact->delete();
+
+        return redirect()->route('admin.kyc.contacts', $loan)
+            ->with('success', 'Contact ' . $contactNumber . ' deleted successfully!');
     }
 
     /**

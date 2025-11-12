@@ -16,6 +16,20 @@ use Illuminate\Support\Facades\Storage;
     </a>
 </div>
 
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bx bx-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bx bx-error-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="row">
     <div class="col-md-4 mb-4">
         <!-- Application Info -->
@@ -65,16 +79,26 @@ use Illuminate\Support\Facades\Storage;
                             <th>number</th>
                             <th>name</th>
                             <th style="width: 150px;">Added On</th>
+                            <th style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($loan->user->referencePhones as $index => $contact)
-                            <tr>
+                            <tr id="contact-row-{{ $contact->id }}">
                                 <td>{{ $index + 1 }}:</td>
                                 <td>{{ $contact->contact_number }}</td>
                                 <td>{{ $contact->name ?? '-' }}</td>
                                 <td>
                                     <small class="text-muted">{{ $contact->created_at->format('M d, Y') }}</small>
+                                </td>
+                                <td>
+                                    <form action="{{ route('admin.kyc.contacts.delete', ['loan' => $loan, 'contact' => $contact]) }}" method="POST" class="d-inline delete-contact-form">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger delete-contact-btn" data-contact-number="{{ $contact->contact_number }}" data-contact-name="{{ $contact->name ?? 'N/A' }}">
+                                            <i class="bx bx-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach
@@ -94,6 +118,35 @@ use Illuminate\Support\Facades\Storage;
     </div>
 </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle delete button clicks with confirmation
+    const deleteForms = document.querySelectorAll('.delete-contact-form');
+    
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const button = form.querySelector('.delete-contact-btn');
+            const contactNumber = button.getAttribute('data-contact-number');
+            const contactName = button.getAttribute('data-contact-name');
+            
+            // Show confirmation prompt
+            if (confirm(`Are you sure you want to delete this contact?\n\nContact: ${contactName}\nNumber: ${contactNumber}\n\nThis action cannot be undone.`)) {
+                // Disable button and show loading state
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting...';
+                
+                // Submit the form
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+@endpush
 
 @endsection
 

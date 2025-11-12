@@ -67,6 +67,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/kyc', [KycController::class, 'store'])->name('kyc.store');
     Route::get('/kyc/{loan}', [KycController::class, 'show'])->name('kyc.show');
     Route::get('/kyc/{loan}/contacts', [KycController::class, 'contacts'])->name('kyc.contacts');
+    Route::delete('/kyc/{loan}/contacts/{contact}', [KycController::class, 'deleteContact'])->name('kyc.contacts.delete');
     Route::get('/kyc/{loan}/locations', [KycController::class, 'locations'])->name('kyc.locations');
     Route::get('/kyc/{loan}/edit', [KycController::class, 'edit'])->name('kyc.edit');
     Route::put('/kyc/{loan}', [KycController::class, 'update'])->name('kyc.update');
