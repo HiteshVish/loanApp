@@ -133,21 +133,21 @@
                             <a href="{{ route('admin.kyc.index') }}" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-file-find"></i>
                                 <div data-i18n="KYC">KYC Applications</div>
-                                <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span>
+                                <!-- <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span> -->
                             </a>
                         </li>
                         <li class="menu-item {{ request()->routeIs('admin.users.*') || request()->routeIs('users.*') ? 'active' : '' }}">
                             <a href="{{ route('admin.users.index') }}" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-group"></i>
                                 <div data-i18n="Users">Manage Users</div>
-                                <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span>
+                                <!-- <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span> -->
                             </a>
                         </li>
                         <li class="menu-item {{ request()->routeIs('admin.payment.*') ? 'active' : '' }}">
                             <a href="{{ route('admin.payment.index') }}" class="menu-link">
                                 <i class="menu-icon tf-icons bx bx-money"></i>
                                 <div data-i18n="Payment">Payment</div>
-                                <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span>
+                                <!-- <span class="badge badge-center rounded-pill bg-danger ms-auto">Admin</span> -->
                             </a>
                         </li>
                         @endif
