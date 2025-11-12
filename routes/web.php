@@ -32,6 +32,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// App Download Page (Public)
+Route::get('/lapp', function () {
+    return view('lapp');
+})->name('lapp');
+
 // Google OAuth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');
