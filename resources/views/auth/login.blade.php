@@ -103,7 +103,7 @@
 
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="remember-me" name="remember" />
+                                    <input class="form-check-input" type="checkbox" id="remember-me" name="remember" value="1" />
                                     <label class="form-check-label" for="remember-me"> Remember Me </label>
                                 </div>
                             </div>
@@ -144,23 +144,41 @@
 
     <!-- Page JS -->
     <script>
-        // Password toggle
-        document.querySelectorAll('.form-password-toggle').forEach(function(el) {
-            const passwordInput = el.querySelector('input');
-            const passwordToggle = el.querySelector('.input-group-text');
-
-            passwordToggle.addEventListener('click', function() {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
+        // Password toggle - ensure DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordToggleElements = document.querySelectorAll('.form-password-toggle');
+            
+            passwordToggleElements.forEach(function(el) {
+                // Find the password input (it might be type="password" or type="text" after toggle)
+                const passwordInput = el.querySelector('input[name="password"]');
+                const passwordToggle = el.querySelector('.input-group-text');
                 
-                const icon = this.querySelector('i');
-                if (type === 'password') {
-                    icon.classList.remove('bx-show');
-                    icon.classList.add('bx-hide');
-                } else {
-                    icon.classList.remove('bx-hide');
-                    icon.classList.add('bx-show');
+                if (!passwordInput || !passwordToggle) {
+                    console.warn('Password toggle elements not found');
+                    return; // Skip if elements not found
                 }
+
+                passwordToggle.style.cursor = 'pointer';
+                
+                passwordToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const currentType = passwordInput.getAttribute('type') || 'password';
+                    const newType = currentType === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', newType);
+                    
+                    const icon = passwordToggle.querySelector('i');
+                    if (icon) {
+                        if (newType === 'password') {
+                            icon.classList.remove('bx-show');
+                            icon.classList.add('bx-hide');
+                        } else {
+                            icon.classList.remove('bx-hide');
+                            icon.classList.add('bx-show');
+                        }
+                    }
+                });
             });
         });
     </script>
