@@ -327,7 +327,7 @@
         <div class="col-lg-4 mb-4">
             <div class="card chart-card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Application Status</h5>
+                    <h5 class="card-title mb-0">Loan Status</h5>
                 </div>
                 <div class="card-body">
                     <div id="statusChart"></div>
@@ -530,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
             height: 300
         },
         labels: Object.keys(@json($statusDistribution ?? [])),
-        colors: ['#ffab00', '#71dd37', '#ff3e1d'],
+        colors: ['#ffab00', '#71dd37', '#03c3ec', '#ff3e1d'],
         legend: {
             position: 'bottom'
         },

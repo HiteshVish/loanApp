@@ -59,11 +59,12 @@ class DashboardController extends Controller
                 ->count();
         }
 
-        // Get status distribution for pie chart
+        // Get status distribution for pie chart (using Loan Status instead of KYC Application Status)
         $statusDistribution = [
-            'Pending' => $pendingApplications,
-            'Approved' => $approvedApplications,
-            'Rejected' => $rejectedApplications
+            'Pending' => $pendingLoans,
+            'Approved' => $approvedLoans,
+            'Completed' => $completedLoans,
+            'Rejected' => $rejectedLoans
         ];
 
         // Calculate growth percentages
