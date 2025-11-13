@@ -41,6 +41,13 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Get loan statistics (must be before statusDistribution)
+        $totalLoans = LoanDetail::count();
+        $pendingLoans = LoanDetail::where('status', 'pending')->count();
+        $approvedLoans = LoanDetail::where('status', 'approved')->count();
+        $completedLoans = LoanDetail::where('status', 'completed')->count();
+        $rejectedLoans = LoanDetail::where('status', 'rejected')->count();
+        
         // Get loans and collections by month for chart (last 6 months)
         $loansChartData = [];
         $collectionsChartData = [];
@@ -84,13 +91,6 @@ class DashboardController extends Controller
         $applicationGrowth = $lastMonthApplications > 0 
             ? round((($newApplicationsThisMonth - $lastMonthApplications) / $lastMonthApplications) * 100, 1) 
             : 0;
-
-        // Get loan statistics
-        $totalLoans = LoanDetail::count();
-        $pendingLoans = LoanDetail::where('status', 'pending')->count();
-        $approvedLoans = LoanDetail::where('status', 'approved')->count();
-        $completedLoans = LoanDetail::where('status', 'completed')->count();
-        $rejectedLoans = LoanDetail::where('status', 'rejected')->count();
         
         // Get total loan amounts
         $totalLoanAmount = LoanDetail::sum('loan_amount');
