@@ -113,13 +113,6 @@
                             </div>
                         </form>
 
-                        <p class="text-center">
-                            <span>New on our platform?</span>
-                            <a href="{{ route('register') }}">
-                                <span>Create an account</span>
-                            </a>
-                        </p>
-
                         @if(config('services.google.client_id'))
                         <div class="divider my-4">
                             <div class="divider-text">or</div>

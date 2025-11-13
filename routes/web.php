@@ -107,10 +107,7 @@ Route::middleware(['auth', 'kyc'])->group(function () {
         return view('account.security');
     })->name('account.security');
 
-    Route::post('/account/security', function () {
-        // Handle password update
-        return redirect()->route('account.security')->with('success', 'Password updated successfully!');
-    });
+    Route::post('/account/security', [App\Http\Controllers\Auth\PasswordController::class, 'update']);
 
 
     // Legacy profile routes (keeping for compatibility)
