@@ -289,9 +289,12 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="d-block mb-1 text-muted">Pending Payments</span>
+                            <span class="d-block mb-1 text-muted">Overdue Payments</span>
                             <h3 class="card-title mb-1 text-danger">{{ number_format($pendingPayments ?? 0) }}</h3>
-                            <small class="text-danger">₹{{ number_format($pendingPaymentAmount ?? 0, 2) }}</small>
+                            <small class="text-danger">₹{{ number_format($pendingPaymentAmount ?? 0, 2) }} due</small>
+                            @if(isset($delayedPayments) && $delayedPayments > 0)
+                                <small class="text-muted d-block mt-1">{{ $delayedPayments }} delayed</small>
+                            @endif
                         </div>
                         <div class="d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
                             <div class="avatar avatar-lg bg-label-danger" style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;">
@@ -336,13 +339,13 @@
         </div>
     </div>
 
-    <!-- Recent Applications -->
+    <!-- Recent Loans -->
     <div class="row">
         <div class="col-lg-12">
             <div class="card table-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Applications</h5>
-                    <a href="{{ route('admin.kyc.index') }}" class="btn btn-sm btn-primary">
+                    <h5 class="card-title mb-0">Recent Loans</h5>
+                    <a href="{{ route('admin.payment.index') }}" class="btn btn-sm btn-primary">
                         <i class='bx bx-show-alt me-1'></i> View All
                     </a>
                 </div>
@@ -352,54 +355,60 @@
                             <thead>
                                 <tr>
                                     <th>Loan ID</th>
-                                    <th>Applicant</th>
+                                    <th>Customer</th>
                                     <th>Email</th>
+                                    <th>Loan Amount</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($recentApplications ?? [] as $app)
+                                @forelse($recentLoans ?? [] as $loan)
                                     <tr>
-                                        <td><strong>{{ $app->loan_id }}</strong></td>
+                                        <td><strong>{{ $loan->loan_id }}</strong></td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar avatar-sm me-2">
-                                                    @if($app->user && $app->user->avatar)
-                                                        <img src="{{ $app->user->avatar }}" class="rounded-circle">
+                                                    @if($loan->user && $loan->user->avatar)
+                                                        <img src="{{ $loan->user->avatar }}" class="rounded-circle">
                                                     @else
                                                         <span class="avatar-initial rounded-circle bg-label-primary">
-                                                            {{ substr($app->full_name, 0, 1) }}
+                                                            {{ substr($loan->user->name ?? 'U', 0, 1) }}
                                                         </span>
                                                     @endif
                                                 </div>
-                                                {{ $app->full_name }}
+                                                {{ $loan->user->name ?? 'N/A' }}
                                             </div>
                                         </td>
-                                        <td>{{ $app->email }}</td>
+                                        <td>{{ $loan->user->email ?? 'N/A' }}</td>
+                                        <td>₹{{ number_format($loan->loan_amount, 2) }}</td>
                                         <td>
-                                            @if($app->status == 'pending')
+                                            @if($loan->status == 'pending')
                                                 <span class="badge bg-warning">Pending</span>
-                                            @elseif($app->status == 'approved')
+                                            @elseif($loan->status == 'approved')
                                                 <span class="badge bg-success">Approved</span>
-                                            @elseif($app->status == 'rejected')
+                                            @elseif($loan->status == 'completed')
+                                                <span class="badge bg-info">Completed</span>
+                                            @elseif($loan->status == 'rejected')
                                                 <span class="badge bg-danger">Rejected</span>
+                                            @else
+                                                <span class="badge bg-secondary">{{ ucfirst($loan->status) }}</span>
                                             @endif
                                         </td>
-                                        <td>{{ $app->created_at->format('M d, Y') }}</td>
+                                        <td>{{ $loan->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <a href="{{ route('admin.kyc.show', $app) }}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ route('admin.payment.show', $loan->loan_id) }}" class="btn btn-sm btn-outline-primary">
                                                 <i class='bx bx-show'></i> View
                                             </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-4">
+                                        <td colspan="7" class="text-center py-4">
                                             <div class="text-muted">
                                                 <i class='bx bx-folder-open bx-lg mb-2'></i>
-                                                <p>No recent applications</p>
+                                                <p>No recent loans</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -483,14 +492,16 @@
 @if(Auth::user()->isAdmin())
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Growth Chart
+    // Growth Chart - Loans and Collections
+    const collectionsDataRaw = @json($collectionsChartData ?? []);
+    const collectionsData = collectionsDataRaw.map(amount => parseFloat(amount || 0));
     const growthChartOptions = {
         series: [{
-            name: 'Applications',
-            data: @json($applicationsChartData ?? [])
+            name: 'Loans',
+            data: @json($loansChartData ?? [])
         }, {
-            name: 'Users',
-            data: @json($usersChartData ?? [])
+            name: 'Collections (₹)',
+            data: collectionsData
         }],
         chart: {
             type: 'line',

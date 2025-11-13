@@ -35,28 +35,31 @@ class DashboardController extends Controller
             ->whereYear('created_at', Carbon::now()->year)
             ->count();
 
-        // Get recent applications (last 5)
-        $recentApplications = KycApplication::with('user')
+        // Get recent loans (last 5) - more relevant than KYC applications
+        $recentLoans = LoanDetail::with('user')
             ->latest()
             ->take(5)
             ->get();
 
-        // Get applications by month for chart (last 6 months)
-        $applicationsChartData = [];
-        $usersChartData = [];
+        // Get loans and collections by month for chart (last 6 months)
+        $loansChartData = [];
+        $collectionsChartData = [];
         $months = [];
         
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $months[] = $date->format('M Y');
             
-            $applicationsChartData[] = KycApplication::whereMonth('created_at', $date->month)
+            // Count loans created in this month
+            $loansChartData[] = LoanDetail::whereMonth('created_at', $date->month)
                 ->whereYear('created_at', $date->year)
                 ->count();
             
-            $usersChartData[] = User::whereMonth('created_at', $date->month)
-                ->whereYear('created_at', $date->year)
-                ->count();
+            // Sum collections (paid_amount) for transactions completed in this month
+            $collectionsChartData[] = Transaction::where('status', 'completed')
+                ->whereMonth('paid_date', $date->month)
+                ->whereYear('paid_date', $date->year)
+                ->sum('paid_amount');
         }
 
         // Get status distribution for pie chart (using Loan Status instead of KYC Application Status)
@@ -122,14 +125,30 @@ class DashboardController extends Controller
             ->whereDate('paid_date', '>=', $startOfMonth)
             ->sum('late_fee');
         
-        // Pending payments (overdue)
-        $pendingPayments = Transaction::where('status', 'pending')
+        // Pending payments (overdue) - includes both pending and delayed transactions
+        // Pending: transactions that are overdue but not yet marked as delayed
+        // Delayed: transactions that are overdue and have been marked as delayed
+        $overduePending = Transaction::where('status', 'pending')
             ->where('due_date', '<', $today)
             ->count();
         
-        // Pending payment amount should include late fees
+        $overdueDelayed = Transaction::where('status', 'delayed')
+            ->count();
+        
+        // Total pending payments (overdue pending + delayed)
+        $pendingPayments = $overduePending + $overdueDelayed;
+        
+        // Calculate total pending payment amount (including late fees)
+        // For pending overdue transactions
         $pendingPaymentAmount = Transaction::where('status', 'pending')
             ->where('due_date', '<', $today)
+            ->get()
+            ->sum(function($t) {
+                return $t->amount + ($t->late_fee ?? 0);
+            });
+        
+        // Add delayed payment amounts
+        $pendingPaymentAmount += Transaction::where('status', 'delayed')
             ->get()
             ->sum(function($t) {
                 return $t->amount + ($t->late_fee ?? 0);
@@ -162,9 +181,9 @@ class DashboardController extends Controller
             'rejectedApplications',
             'newApplicationsThisMonth',
             'applicationGrowth',
-            'recentApplications',
-            'applicationsChartData',
-            'usersChartData',
+            'recentLoans',
+            'loansChartData',
+            'collectionsChartData',
             'months',
             'statusDistribution',
             'totalLoans',
