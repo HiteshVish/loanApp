@@ -144,43 +144,53 @@
 
     <!-- Page JS -->
     <script>
-        // Password toggle - ensure DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            const passwordToggleElements = document.querySelectorAll('.form-password-toggle');
+        // Password toggle - using Sneat pattern
+        (function() {
+            'use strict';
             
-            passwordToggleElements.forEach(function(el) {
-                // Find the password input (it might be type="password" or type="text" after toggle)
-                const passwordInput = el.querySelector('input[name="password"]');
-                const passwordToggle = el.querySelector('.input-group-text');
+            // Wait for DOM to be fully loaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPasswordToggle);
+            } else {
+                initPasswordToggle();
+            }
+            
+            function initPasswordToggle() {
+                const passwordToggles = document.querySelectorAll('.form-password-toggle i');
                 
-                if (!passwordInput || !passwordToggle) {
-                    console.warn('Password toggle elements not found');
-                    return; // Skip if elements not found
+                if (passwordToggles.length === 0) {
+                    return;
                 }
-
-                passwordToggle.style.cursor = 'pointer';
                 
-                passwordToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                passwordToggles.forEach(function(toggleIcon) {
+                    // Make sure the icon is clickable
+                    toggleIcon.style.cursor = 'pointer';
                     
-                    const currentType = passwordInput.getAttribute('type') || 'password';
-                    const newType = currentType === 'password' ? 'text' : 'password';
-                    passwordInput.setAttribute('type', newType);
-                    
-                    const icon = passwordToggle.querySelector('i');
-                    if (icon) {
-                        if (newType === 'password') {
-                            icon.classList.remove('bx-show');
-                            icon.classList.add('bx-hide');
+                    toggleIcon.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const formPasswordToggle = toggleIcon.closest('.form-password-toggle');
+                        if (!formPasswordToggle) return;
+                        
+                        const passwordInput = formPasswordToggle.querySelector('input');
+                        if (!passwordInput) return;
+                        
+                        const currentType = passwordInput.getAttribute('type') || 'password';
+                        
+                        if (currentType === 'password') {
+                            passwordInput.setAttribute('type', 'text');
+                            toggleIcon.classList.remove('bx-hide');
+                            toggleIcon.classList.add('bx-show');
                         } else {
-                            icon.classList.remove('bx-hide');
-                            icon.classList.add('bx-show');
+                            passwordInput.setAttribute('type', 'password');
+                            toggleIcon.classList.remove('bx-show');
+                            toggleIcon.classList.add('bx-hide');
                         }
-                    }
+                    });
                 });
-            });
-        });
+            }
+        })();
     </script>
 </body>
 
