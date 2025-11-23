@@ -71,6 +71,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/kyc/create', [KycController::class, 'create'])->name('kyc.create');
     Route::post('/kyc', [KycController::class, 'store'])->name('kyc.store');
     Route::get('/kyc/{loan}', [KycController::class, 'show'])->name('kyc.show');
+    
+    // User-based contacts and locations (using user_id, not loan_id)
+    Route::get('/kyc/user/{user}/contacts', [KycController::class, 'userContacts'])->name('kyc.user.contacts');
+    Route::delete('/kyc/user/{user}/contacts', [KycController::class, 'deleteAllUserContacts'])->name('kyc.user.contacts.deleteAll');
+    Route::get('/kyc/user/{user}/locations', [KycController::class, 'userLocations'])->name('kyc.user.locations');
+    
+    // Legacy loan-based routes (kept for backward compatibility, but redirect to user-based)
     Route::get('/kyc/{loan}/contacts', [KycController::class, 'contacts'])->name('kyc.contacts');
     Route::delete('/kyc/{loan}/contacts', [KycController::class, 'deleteAllContacts'])->name('kyc.contacts.deleteAll');
     Route::get('/kyc/{loan}/locations', [KycController::class, 'locations'])->name('kyc.locations');

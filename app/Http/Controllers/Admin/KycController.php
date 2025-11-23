@@ -82,64 +82,109 @@ class KycController extends Controller
     }
 
     /**
-     * Show all contacts for KYC application
+     * Show all contacts for a user (using user_id)
+     */
+    public function userContacts(User $user)
+    {
+        // Fetch ALL contacts for this user by user_id
+        $contacts = UserReferencePhone::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Attach contacts to user
+        $user->setRelation('referencePhones', $contacts);
+        
+        // Create a dummy loan object for view compatibility (if user has loans, use first one)
+        $loan = $user->loanDetails->first();
+        if (!$loan) {
+            // Create a temporary loan object for view compatibility
+            $loan = new LoanDetail();
+            $loan->user_id = $user->id;
+            $loan->user = $user;
+        } else {
+            $loan->load(['user']);
+            $loan->user->setRelation('referencePhones', $contacts);
+        }
+        
+        return view('admin.kyc.contacts', ['loan' => $loan, 'user' => $user]);
+    }
+
+    /**
+     * Show all contacts for KYC application (legacy - redirects to user-based)
      * Fetch contacts by user_id, not loan_id
      */
     public function contacts(\App\Models\LoanDetail $loan)
     {
-        $loan->load(['user']);
-        
-        // Fetch ALL contacts for this user by user_id
-        $userId = $loan->user_id;
-        $contacts = UserReferencePhone::where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        // Attach contacts to user for view compatibility
-        $loan->user->setRelation('referencePhones', $contacts);
-        
-        return view('admin.kyc.contacts', ['loan' => $loan]);
+        // Redirect to user-based route
+        return redirect()->route('admin.kyc.user.contacts', $loan->user_id);
     }
 
     /**
-     * Delete all contacts from KYC application
+     * Delete all contacts for a user (using user_id)
      */
-    public function deleteAllContacts(\App\Models\LoanDetail $loan)
+    public function deleteAllUserContacts(User $user)
     {
-        $user = $loan->user;
-        $contactCount = $user->referencePhones->count();
+        $contactCount = UserReferencePhone::where('user_id', $user->id)->count();
 
         if ($contactCount === 0) {
-            return redirect()->route('admin.kyc.contacts', $loan)
+            return redirect()->route('admin.kyc.user.contacts', $user->id)
                 ->with('error', 'No contacts found to delete.');
         }
 
         // Delete all contacts for this user
-        $user->referencePhones()->delete();
+        UserReferencePhone::where('user_id', $user->id)->delete();
 
-        return redirect()->route('admin.kyc.contacts', $loan)
+        return redirect()->route('admin.kyc.user.contacts', $user->id)
             ->with('success', 'All ' . $contactCount . ' contacts deleted successfully!');
     }
 
     /**
-     * Show all locations for KYC application
-     * Fetch locations by user_id, not loan_id
+     * Delete all contacts from KYC application (legacy - redirects to user-based)
      */
-    public function locations(\App\Models\LoanDetail $loan)
+    public function deleteAllContacts(\App\Models\LoanDetail $loan)
     {
-        $loan->load(['user']);
-        
+        // Redirect to user-based route
+        return redirect()->route('admin.kyc.user.contacts.deleteAll', $loan->user_id);
+    }
+
+    /**
+     * Show all locations for a user (using user_id)
+     */
+    public function userLocations(User $user)
+    {
         // Fetch ALL locations for this user by user_id, ordered by newest first
-        $userId = $loan->user_id;
-        $locations = UserLocation::where('user_id', $userId)
+        $locations = UserLocation::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(10) // Show latest 10 for display
             ->get();
         
-        // Attach locations to user for view compatibility
-        $loan->user->setRelation('locations', $locations);
+        // Attach locations to user
+        $user->setRelation('locations', $locations);
         
-        return view('admin.kyc.locations', ['loan' => $loan]);
+        // Create a dummy loan object for view compatibility (if user has loans, use first one)
+        $loan = $user->loanDetails->first();
+        if (!$loan) {
+            // Create a temporary loan object for view compatibility
+            $loan = new LoanDetail();
+            $loan->user_id = $user->id;
+            $loan->user = $user;
+            $loan->user->setRelation('locations', $locations);
+        } else {
+            $loan->load(['user']);
+            $loan->user->setRelation('locations', $locations);
+        }
+        
+        return view('admin.kyc.locations', ['loan' => $loan, 'user' => $user]);
+    }
+
+    /**
+     * Show all locations for KYC application (legacy - redirects to user-based)
+     * Fetch locations by user_id, not loan_id
+     */
+    public function locations(\App\Models\LoanDetail $loan)
+    {
+        // Redirect to user-based route
+        return redirect()->route('admin.kyc.user.locations', $loan->user_id);
     }
 
     /**

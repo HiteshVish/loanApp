@@ -102,7 +102,7 @@
                     
                     @if($contacts->count() > 10)
                         <div class="mt-3 text-center">
-                            <a href="{{ route('admin.kyc.contacts', $loan) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ route('admin.kyc.user.contacts', $loan->user_id) }}" class="btn btn-primary btn-sm">
                                 <i class="bx bx-show-alt me-1"></i>
                                 View All {{ $contacts->count() }} Contacts
                             </a>
@@ -164,7 +164,7 @@
                         @endif
                     </div>
                     <div class="text-center">
-                        <a href="{{ route('admin.kyc.locations', $loan) }}" class="btn btn-primary btn-sm w-100">
+                        <a href="{{ route('admin.kyc.user.locations', $loan->user_id) }}" class="btn btn-primary btn-sm w-100">
                             <i class="bx bx-map-alt me-1"></i>
                             View Full Map & All {{ $locations->count() }} Locations
                         </a>

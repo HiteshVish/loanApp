@@ -4,16 +4,22 @@
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@section('title', 'All Contacts - KYC Application ' . ($loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT)))
+@section('title', 'All Contacts - User ' . ($user->id ?? $loan->user_id))
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold py-3 mb-0">
-        <span class="text-muted fw-light">Admin / KYC / Application {{ $loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT) }} /</span> All Contacts
+        <span class="text-muted fw-light">Admin / KYC / {{ $user->id ?? $loan->user_id }} /</span> All Contacts
     </h4>
-    <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-outline-secondary">
-        <i class="bx bx-arrow-back"></i> Back to Application
-    </a>
+    @if(isset($loan) && $loan->loan_id)
+        <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-outline-secondary">
+            <i class="bx bx-arrow-back"></i> Back to Application
+        </a>
+    @else
+        <a href="{{ route('admin.users.show', $user->id ?? $loan->user_id) }}" class="btn btn-outline-secondary">
+            <i class="bx bx-arrow-back"></i> Back to User
+        </a>
+    @endif
 </div>
 
 @if(session('success'))
@@ -36,9 +42,10 @@ use Illuminate\Support\Facades\Storage;
         <div class="card">
             <div class="card-body text-center">
                 @php
-                    $userDetail = $loan->user->userDetail;
-                    $name = $userDetail && $userDetail->name ? $userDetail->name : $loan->user->name;
-                    $email = $userDetail && $userDetail->email ? $userDetail->email : $loan->user->email;
+                    $displayUser = $user ?? $loan->user;
+                    $userDetail = $displayUser->userDetail;
+                    $name = $userDetail && $userDetail->name ? $userDetail->name : $displayUser->name;
+                    $email = $userDetail && $userDetail->email ? $userDetail->email : $displayUser->email;
                     $photo = $userDetail && $userDetail->photo ? $userDetail->photo : null;
                 @endphp
                 
@@ -68,12 +75,16 @@ use Illuminate\Support\Facades\Storage;
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i>All Contacts</h5>
         <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-primary" id="contactCount">{{ $loan->user->referencePhones->count() }} Contacts</span>
-            @if($loan->user->referencePhones && $loan->user->referencePhones->count() > 0)
-                <form action="{{ route('admin.kyc.contacts.deleteAll', $loan) }}" method="POST" class="d-inline delete-all-contacts-form">
+            @php
+            $displayUser = $user ?? $loan->user;
+            $userContacts = $displayUser->referencePhones ?? collect();
+        @endphp
+        <span class="badge bg-primary" id="contactCount">{{ $userContacts->count() }} Contacts</span>
+            @if($userContacts && $userContacts->count() > 0)
+                <form action="{{ route('admin.kyc.user.contacts.deleteAll', $displayUser->id) }}" method="POST" class="d-inline delete-all-contacts-form">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger delete-all-contacts-btn" data-contact-count="{{ $loan->user->referencePhones->count() }}">
+                    <button type="submit" class="btn btn-sm btn-danger delete-all-contacts-btn" data-contact-count="{{ $userContacts->count() }}">
                         <i class="bx bx-trash"></i> Delete All Contacts
                     </button>
                 </form>
@@ -81,7 +92,7 @@ use Illuminate\Support\Facades\Storage;
         </div>
     </div>
     <div class="card-body p-0" id="allContactsList">
-        @if($loan->user->referencePhones && $loan->user->referencePhones->count() > 0)
+        @if($userContacts && $userContacts->count() > 0)
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -93,7 +104,7 @@ use Illuminate\Support\Facades\Storage;
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($loan->user->referencePhones as $index => $contact)
+                        @foreach($userContacts as $index => $contact)
                             <tr id="contact-row-{{ $contact->id }}">
                                 <td>{{ $index + 1 }}:</td>
                                 <td>{{ $contact->contact_number }}</td>

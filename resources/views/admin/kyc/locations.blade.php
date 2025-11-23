@@ -4,16 +4,22 @@
 use Illuminate\Support\Facades\Storage;
 @endphp
 
-@section('title', 'All Locations - KYC Application ' . ($loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT)))
+@section('title', 'All Locations - User ' . ($user->id ?? $loan->user_id))
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold py-3 mb-0">
-        <span class="text-muted fw-light">Admin / KYC / Application {{ $loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT) }} /</span> All Locations
+        <span class="text-muted fw-light">Admin / KYC / {{ $user->id ?? $loan->user_id }} /</span> All Locations
     </h4>
-    <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-outline-secondary">
-        <i class="bx bx-arrow-back"></i> Back to Application
-    </a>
+    @if(isset($loan) && $loan->loan_id)
+        <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-outline-secondary">
+            <i class="bx bx-arrow-back"></i> Back to Application
+        </a>
+    @else
+        <a href="{{ route('admin.users.show', $user->id ?? $loan->user_id) }}" class="btn btn-outline-secondary">
+            <i class="bx bx-arrow-back"></i> Back to User
+        </a>
+    @endif
 </div>
 
 <div class="row">
@@ -22,14 +28,15 @@ use Illuminate\Support\Facades\Storage;
         <div class="card text-center">
             <div class="card-body">
                 @php
-                    $userDetail = $loan->user->userDetail;
-                    $name = $userDetail && $userDetail->name ? $userDetail->name : $loan->user->name;
-                    $email = $userDetail && $userDetail->email ? $userDetail->email : $loan->user->email;
+                    $displayUser = $user ?? $loan->user;
+                    $userDetail = $displayUser->userDetail;
+                    $name = $userDetail && $userDetail->name ? $userDetail->name : $displayUser->name;
+                    $email = $userDetail && $userDetail->email ? $userDetail->email : $displayUser->email;
                     $photo = $userDetail && $userDetail->photo ? $userDetail->photo : null;
                 @endphp
                 
-                @if($loan->user->avatar)
-                    <img src="{{ $loan->user->avatar }}" alt="{{ $name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                @if($displayUser->avatar)
+                    <img src="{{ $displayUser->avatar }}" alt="{{ $name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @elseif($photo)
                     <img src="{{ url('storage/app/public/' . $photo) }}" alt="{{ $name }}" class="rounded-circle mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @else
@@ -40,9 +47,11 @@ use Illuminate\Support\Facades\Storage;
                 <h5 class="mb-1">{{ $name }}</h5>
                 <p class="text-muted mb-3">{{ $email }}</p>
                 <div class="text-start">
-                    <p class="mb-1"><strong>User ID:</strong> #{{ $loan->user->id }}</p>
-                    <p class="mb-1"><strong>Loan ID:</strong> {{ $loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT) }}</p>
-                    <p class="mb-0"><strong>Status:</strong> <span class="badge bg-{{ $loan->status === 'approved' ? 'success' : ($loan->status === 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($loan->status) }}</span></p>
+                    <p class="mb-1"><strong>User ID:</strong> #{{ $displayUser->id }}</p>
+                    @if(isset($loan) && $loan->loan_id)
+                        <p class="mb-1"><strong>Loan ID:</strong> {{ $loan->loan_id }}</p>
+                        <p class="mb-0"><strong>Status:</strong> <span class="badge bg-{{ $loan->status === 'approved' ? 'success' : ($loan->status === 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($loan->status) }}</span></p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -54,10 +63,14 @@ use Illuminate\Support\Facades\Storage;
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bx bx-map me-2"></i>Location Map</h5>
-                <span class="badge bg-primary">Latest {{ $loan->user->locations->count() }} Locations</span>
+                @php
+                    $displayUser = $user ?? $loan->user;
+                    $userLocations = $displayUser->locations ?? collect();
+                @endphp
+                <span class="badge bg-primary">Latest {{ $userLocations->count() }} Locations</span>
             </div>
             <div class="card-body p-0">
-                @if($loan->user->locations && $loan->user->locations->count() > 0)
+                @if($userLocations && $userLocations->count() > 0)
                     <div id="locationMap" style="height: 500px; position: relative;"></div>
                 @else
                     <div class="text-center py-5">
@@ -91,7 +104,7 @@ use Illuminate\Support\Facades\Storage;
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($loan->user->locations as $index => $location)
+                                @foreach($userLocations as $index => $location)
                                     <tr>
                                         <td>{{ $index + 1 }}:</td>
                                         <td>{{ $location->address ?? '-' }}</td>
@@ -150,7 +163,11 @@ use Illuminate\Support\Facades\Storage;
 <script>
 // Initialize OpenStreetMap with multiple locations
 document.addEventListener('DOMContentLoaded', function() {
-    const locations = @json($loan->user->locations->map(function($loc) {
+    @php
+        $displayUser = $user ?? $loan->user;
+        $userLocations = $displayUser->locations ?? collect();
+    @endphp
+    const locations = @json($userLocations->map(function($loc) {
         return [
             'lat' => (float)$loc->latitude,
             'lng' => (float)$loc->longitude,

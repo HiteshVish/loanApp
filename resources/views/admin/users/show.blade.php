@@ -145,17 +145,12 @@
                 </div>
             @endif
             
-            @php
-                $firstLoan = $user->loanDetails->first();
-            @endphp
-            @if($firstLoan)
-                <div class="mt-3 text-center">
-                    <a href="{{ route('admin.kyc.contacts', $firstLoan) }}" class="btn btn-primary btn-sm">
-                        <i class="bx bx-show-alt me-1"></i>
-                        View All {{ $contacts->count() }} Contacts
-                    </a>
-                </div>
-            @endif
+            <div class="mt-3 text-center">
+                <a href="{{ route('admin.kyc.user.contacts', $user->id) }}" class="btn btn-primary btn-sm">
+                    <i class="bx bx-show-alt me-1"></i>
+                    View All {{ $contacts->count() }} Contacts
+                </a>
+            </div>
         @else
             <div class="text-center py-5">
                 <div class="d-flex justify-content-center mb-3">
@@ -212,21 +207,12 @@
                     </div>
                 @endif
             </div>
-            @php
-                $firstLoan = $user->loanDetails->first();
-            @endphp
-            @if($firstLoan)
-                <div class="text-center">
-                    <a href="{{ route('admin.kyc.locations', $firstLoan) }}" class="btn btn-primary btn-sm w-100">
-                        <i class="bx bx-map-alt me-1"></i>
-                        View Full Map & All {{ $totalLocations }} Locations
-                    </a>
-                </div>
-            @else
-                <div class="text-center">
-                    <p class="text-muted small mb-0">Showing latest {{ $locations->count() }} locations</p>
-                </div>
-            @endif
+            <div class="text-center">
+                <a href="{{ route('admin.kyc.user.locations', $user->id) }}" class="btn btn-primary btn-sm w-100">
+                    <i class="bx bx-map-alt me-1"></i>
+                    View Full Map & All {{ $totalLocations }} Locations
+                </a>
+            </div>
         </div>
     @endif
 </div>
