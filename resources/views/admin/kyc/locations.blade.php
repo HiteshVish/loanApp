@@ -87,6 +87,7 @@ use Illuminate\Support\Facades\Storage;
                                     <th style="width: 150px;">latitude</th>
                                     <th style="width: 150px;">longitude</th>
                                     <th style="width: 150px;">Added On</th>
+                                    <th style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -98,6 +99,13 @@ use Illuminate\Support\Facades\Storage;
                                         <td><code>{{ $location->longitude }}</code></td>
                                         <td>
                                             <small class="text-muted">{{ $location->created_at->format('M d, Y') }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="https://www.google.com/maps/dir/?api=1&destination={{ $location->latitude }},{{ $location->longitude }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bx bx-navigation"></i> Get Direction
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach
