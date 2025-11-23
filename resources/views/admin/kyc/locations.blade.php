@@ -54,7 +54,7 @@ use Illuminate\Support\Facades\Storage;
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bx bx-map me-2"></i>Location Map</h5>
-                <span class="badge bg-primary">{{ $loan->user->locations->count() }} Locations</span>
+                <span class="badge bg-primary">Latest {{ $loan->user->locations->count() }} Locations</span>
             </div>
             <div class="card-body p-0">
                 @if($loan->user->locations && $loan->user->locations->count() > 0)
@@ -74,7 +74,7 @@ use Illuminate\Support\Facades\Storage;
         <!-- Locations Table -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i>All Locations</h5>
+                <h5 class="mb-0"><i class="bx bx-list-ul me-2"></i>Latest Locations (Last 10)</h5>
             </div>
             <div class="card-body p-0">
                 @if($loan->user->locations && $loan->user->locations->count() > 0)

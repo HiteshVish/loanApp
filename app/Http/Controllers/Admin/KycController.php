@@ -103,7 +103,13 @@ class KycController extends Controller
      */
     public function locations(\App\Models\LoanDetail $loan)
     {
-        $loan->load(['user', 'user.locations']);
+        $loan->load(['user']);
+        
+        // Load only latest 10 locations, ordered by newest first
+        $loan->user->load(['locations' => function($query) {
+            $query->orderBy('created_at', 'desc')->limit(10);
+        }]);
+        
         return view('admin.kyc.locations', ['loan' => $loan]);
     }
 
