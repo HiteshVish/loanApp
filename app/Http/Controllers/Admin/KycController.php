@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\LoanDetail;
 use App\Models\UserReferencePhone;
+use App\Models\UserLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -62,19 +63,41 @@ class KycController extends Controller
 
     /**
      * Show single KYC application details (for a specific loan)
+     * Fetch contacts and locations by user_id, not loan_id
      */
     public function show(\App\Models\LoanDetail $loan)
     {
-        $loan->load(['user.userDetail', 'user', 'user.referencePhones', 'user.locations']);
+        $loan->load(['user.userDetail', 'user']);
+        
+        // Fetch ALL contacts and locations for this user by user_id
+        $userId = $loan->user_id;
+        $contacts = UserReferencePhone::where('user_id', $userId)->get();
+        $locations = UserLocation::where('user_id', $userId)->get();
+        
+        // Attach to user for view compatibility
+        $loan->user->setRelation('referencePhones', $contacts);
+        $loan->user->setRelation('locations', $locations);
+        
         return view('admin.kyc.show', ['loan' => $loan]);
     }
 
     /**
      * Show all contacts for KYC application
+     * Fetch contacts by user_id, not loan_id
      */
     public function contacts(\App\Models\LoanDetail $loan)
     {
-        $loan->load(['user', 'user.referencePhones']);
+        $loan->load(['user']);
+        
+        // Fetch ALL contacts for this user by user_id
+        $userId = $loan->user_id;
+        $contacts = UserReferencePhone::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Attach contacts to user for view compatibility
+        $loan->user->setRelation('referencePhones', $contacts);
+        
         return view('admin.kyc.contacts', ['loan' => $loan]);
     }
 
@@ -100,15 +123,21 @@ class KycController extends Controller
 
     /**
      * Show all locations for KYC application
+     * Fetch locations by user_id, not loan_id
      */
     public function locations(\App\Models\LoanDetail $loan)
     {
         $loan->load(['user']);
         
-        // Load only latest 10 locations, ordered by newest first
-        $loan->user->load(['locations' => function($query) {
-            $query->orderBy('created_at', 'desc')->limit(10);
-        }]);
+        // Fetch ALL locations for this user by user_id, ordered by newest first
+        $userId = $loan->user_id;
+        $locations = UserLocation::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit(10) // Show latest 10 for display
+            ->get();
+        
+        // Attach locations to user for view compatibility
+        $loan->user->setRelation('locations', $locations);
         
         return view('admin.kyc.locations', ['loan' => $loan]);
     }

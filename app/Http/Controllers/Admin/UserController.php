@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserReferencePhone;
+use App\Models\UserLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -42,13 +44,23 @@ class UserController extends Controller
             'loanDetails' => function($query) {
                 $query->with('transactions')->orderBy('created_at', 'desc');
             },
-            'kycApplication',
-            'referencePhones'
+            'kycApplication'
         ]);
         
-        // Load all locations for count, but also get latest 10 for display
-        $user->load(['locations']);
-        $user->latestLocations = $user->locations()->orderBy('created_at', 'desc')->limit(10)->get();
+        // Fetch ALL contacts for this user by user_id
+        $contacts = UserReferencePhone::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $user->setRelation('referencePhones', $contacts);
+        
+        // Fetch ALL locations for this user by user_id
+        $allLocations = UserLocation::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $user->setRelation('locations', $allLocations);
+        
+        // Get latest 10 for display
+        $user->latestLocations = $allLocations->take(10);
 
         // Calculate loan statistics for each loan
         foreach ($user->loanDetails as $loan) {
