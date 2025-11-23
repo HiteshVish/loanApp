@@ -386,7 +386,7 @@
 
 @push('styles')
 @php
-    $locations = $user->locations ?? collect();
+    $locations = isset($user->latestLocations) ? $user->latestLocations : ($user->locations ?? collect());
 @endphp
 @if($locations->count() > 0)
 <!-- Leaflet CSS (Free OpenStreetMap) -->
@@ -405,7 +405,7 @@
 
 @push('scripts')
 @php
-    $locations = $user->locations ?? collect();
+    $locations = isset($user->latestLocations) ? $user->latestLocations : ($user->locations ?? collect());
 @endphp
 @if($locations->count() > 0)
 <!-- Leaflet JS (Free OpenStreetMap) -->
