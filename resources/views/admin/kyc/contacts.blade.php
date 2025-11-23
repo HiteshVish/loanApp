@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\Storage;
                 @if($loan->user->avatar)
                     <img src="{{ $loan->user->avatar }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @elseif($photo)
-                    <img src="{{ Storage::url($photo) }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                    <img src="{{ url('storage/app/public/' . $photo) }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @else
                     <div class="avatar avatar-xl mx-auto mb-3">
                         <span class="avatar-initial rounded-circle bg-label-primary" style="font-size: 36px;">{{ substr($name, 0, 1) }}</span>
