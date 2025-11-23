@@ -105,7 +105,8 @@ class LoanDetail extends Model
 
         $dailyEMI = $this->calculateDailyEMI();
         // Use application timezone for date calculations
-        $startDate = Carbon::parse($this->created_at)->setTimezone(config('app.timezone'))->toDateString();
+        // Start transactions from tomorrow (application date + 1 day)
+        $startDate = Carbon::parse($this->created_at)->setTimezone(config('app.timezone'))->addDay()->toDateString();
         
         for ($i = 0; $i < $this->tenure * 30; $i++) {
             $dueDate = Carbon::parse($startDate)->setTimezone(config('app.timezone'))->addDays($i)->toDateString();
