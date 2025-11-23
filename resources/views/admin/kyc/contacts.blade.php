@@ -49,8 +49,8 @@ use Illuminate\Support\Facades\Storage;
                     $photo = $userDetail && $userDetail->photo ? $userDetail->photo : null;
                 @endphp
                 
-                @if($loan->user->avatar)
-                    <img src="{{ $loan->user->avatar }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+                @if($displayUser->avatar)
+                    <img src="{{ $displayUser->avatar }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @elseif($photo)
                     <img src="{{ url('storage/app/public/' . $photo) }}" alt class="rounded mb-3" style="width: 100px; height: 100px; object-fit: cover;">
                 @else
@@ -61,9 +61,11 @@ use Illuminate\Support\Facades\Storage;
                 <h5 class="mb-1">{{ $name }}</h5>
                 <p class="text-muted mb-3">{{ $email }}</p>
                 <div class="text-start">
-                    <p class="mb-1"><strong>User ID:</strong> #{{ $loan->user->id }}</p>
-                    <p class="mb-1"><strong>Loan ID:</strong> {{ $loan->loan_id ?? 'LON' . str_pad($loan->id, 3, '0', STR_PAD_LEFT) }}</p>
-                    <p class="mb-0"><strong>Status:</strong> <span class="badge bg-{{ $loan->status === 'approved' ? 'success' : ($loan->status === 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($loan->status) }}</span></p>
+                    <p class="mb-1"><strong>User ID:</strong> #{{ $displayUser->id }}</p>
+                    @if(isset($loan) && $loan->loan_id)
+                        <p class="mb-1"><strong>Loan ID:</strong> {{ $loan->loan_id }}</p>
+                        <p class="mb-0"><strong>Status:</strong> <span class="badge bg-{{ $loan->status === 'approved' ? 'success' : ($loan->status === 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($loan->status) }}</span></p>
+                    @endif
                 </div>
             </div>
         </div>
