@@ -43,9 +43,13 @@ class UserController extends Controller
                 $query->with('transactions')->orderBy('created_at', 'desc');
             },
             'kycApplication',
-            'locations',
             'referencePhones'
         ]);
+        
+        // Load only latest 10 locations, ordered by newest first
+        $user->load(['locations' => function($query) {
+            $query->orderBy('created_at', 'desc')->limit(10);
+        }]);
 
         // Calculate loan statistics for each loan
         foreach ($user->loanDetails as $loan) {
