@@ -245,6 +245,74 @@ class PaymentController extends Controller
     }
 
     /**
+     * Forgive late fee - Remove late fees from transactions starting from earliest
+     */
+    public function forgiveLateFee(Request $request, $loanId)
+    {
+        $validated = $request->validate([
+            'forgive_amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $loan = LoanDetail::findOrFail($loanId);
+        
+        // Get all transactions with late fees, ordered by due_date (earliest first)
+        $transactions = Transaction::where('loan_id', $loanId)
+            ->where('late_fee', '>', 0)
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return back()->with('error', 'No transactions with late fees found for this loan.');
+        }
+
+        $totalLateFee = $transactions->sum('late_fee');
+        $forgiveAmount = $validated['forgive_amount'];
+
+        if ($forgiveAmount > $totalLateFee) {
+            return back()->with('error', 'Forgive amount (₹' . number_format($forgiveAmount, 2) . ') cannot exceed total late fees (₹' . number_format($totalLateFee, 2) . ').');
+        }
+
+        $remainingAmount = $forgiveAmount;
+        $forgivenTransactions = [];
+        $totalForgiven = 0;
+
+        // Deduct from transactions sequentially, starting from earliest
+        foreach ($transactions as $transaction) {
+            if ($remainingAmount <= 0) {
+                break;
+            }
+
+            $currentLateFee = $transaction->late_fee;
+            
+            if ($remainingAmount >= $currentLateFee) {
+                // Forgive entire late fee for this transaction
+                $forgivenAmount = $currentLateFee;
+                $transaction->late_fee = 0;
+                $remainingAmount -= $forgivenAmount;
+            } else {
+                // Partially forgive late fee
+                $forgivenAmount = $remainingAmount;
+                $transaction->late_fee = $currentLateFee - $forgivenAmount;
+                $remainingAmount = 0;
+            }
+
+            $transaction->save();
+            $forgivenTransactions[] = [
+                'due_date' => $transaction->due_date->format('M d, Y'),
+                'forgiven' => $forgivenAmount
+            ];
+            $totalForgiven += $forgivenAmount;
+        }
+
+        $message = 'Successfully forgave ₹' . number_format($totalForgiven, 2) . ' in late fees. ';
+        if (count($forgivenTransactions) > 0) {
+            $message .= 'Applied to ' . count($forgivenTransactions) . ' transaction(s) starting from ' . $forgivenTransactions[0]['due_date'] . '.';
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
      * Manually mark loan as completed (admin can override)
      */
     public function markAsCompleted($loanId)

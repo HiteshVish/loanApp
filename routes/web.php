@@ -85,6 +85,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/payment', [App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payment.index');
     Route::get('/payment/{loanId}', [App\Http\Controllers\Admin\PaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{loanId}/record', [App\Http\Controllers\Admin\PaymentController::class, 'recordPayment'])->name('payment.record');
+    Route::post('/payment/{loanId}/forgive-late-fee', [App\Http\Controllers\Admin\PaymentController::class, 'forgiveLateFee'])->name('payment.forgive-late-fee');
     Route::patch('/loan/{loanId}/complete', [App\Http\Controllers\Admin\PaymentController::class, 'markAsCompleted'])->name('loan.complete');
 });
 

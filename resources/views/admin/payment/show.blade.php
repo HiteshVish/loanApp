@@ -3,6 +3,20 @@
 @section('title', 'Payment Details')
 
 @section('content')
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bx bx-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bx bx-error-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold py-3 mb-0">
         <span class="text-muted fw-light">Admin / Payment /</span> {{ $loan->loan_id }}
@@ -174,6 +188,52 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Forgive Late Fee Form -->
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bx bx-money-withdraw me-2"></i>Forgive Late Fee / Penalty</h5>
+    </div>
+    <div class="card-body">
+        @php
+            $totalLateFee = $loan->transactions->sum('late_fee');
+        @endphp
+        @if($totalLateFee > 0)
+            <div class="alert alert-info mb-3">
+                <strong>Total Late Fees:</strong> ₹{{ number_format($totalLateFee, 2) }}
+                <br><small class="text-muted">Late fees will be removed starting from the earliest transaction (Day 1).</small>
+            </div>
+            <form action="{{ route('admin.payment.forgive-late-fee', $loan->loan_id) }}" method="POST" id="forgiveLateFeeForm">
+                @csrf
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="forgive_amount" class="form-label">Amount to Forgive (₹) *</label>
+                        <input type="number" step="0.01" min="0.01" max="{{ $totalLateFee }}" 
+                               class="form-control @error('forgive_amount') is-invalid @enderror" 
+                               id="forgive_amount" name="forgive_amount" 
+                               placeholder="Enter amount to forgive" required>
+                        @error('forgive_amount')
+                            <small class="text-danger">{{ $message }}</small>
+                        @else
+                            <small class="text-muted">Maximum: ₹{{ number_format($totalLateFee, 2) }}</small>
+                        @enderror
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-warning w-100" 
+                                onclick="return confirm('Are you sure you want to forgive this late fee amount? This action will reduce late fees starting from the earliest transaction.');">
+                            <i class="bx bx-check"></i> Forgive Late Fee
+                        </button>
+                    </div>
+                </div>
+            </form>
+        @else
+            <div class="alert alert-success mb-0">
+                <i class="bx bx-check-circle me-2"></i>No late fees to forgive. All transactions are up to date.
+            </div>
+        @endif
     </div>
 </div>
 
