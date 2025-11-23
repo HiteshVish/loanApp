@@ -46,10 +46,9 @@ class UserController extends Controller
             'referencePhones'
         ]);
         
-        // Load only latest 10 locations, ordered by newest first
-        $user->load(['locations' => function($query) {
-            $query->orderBy('created_at', 'desc')->limit(10);
-        }]);
+        // Load all locations for count, but also get latest 10 for display
+        $user->load(['locations']);
+        $user->latestLocations = $user->locations()->orderBy('created_at', 'desc')->limit(10)->get();
 
         // Calculate loan statistics for each loan
         foreach ($user->loanDetails as $loan) {

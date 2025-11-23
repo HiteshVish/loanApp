@@ -144,6 +144,18 @@
                     <p class="text-muted small mb-0">Showing latest 10 of {{ $contacts->count() }} contacts</p>
                 </div>
             @endif
+            
+            @php
+                $firstLoan = $user->loanDetails->first();
+            @endphp
+            @if($firstLoan)
+                <div class="mt-3 text-center">
+                    <a href="{{ route('admin.kyc.contacts', $firstLoan) }}" class="btn btn-primary btn-sm">
+                        <i class="bx bx-show-alt me-1"></i>
+                        View All {{ $contacts->count() }} Contacts
+                    </a>
+                </div>
+            @endif
         @else
             <div class="text-center py-5">
                 <div class="d-flex justify-content-center mb-3">
@@ -163,10 +175,11 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bx bx-map me-2"></i>User Locations</h5>
         @php
-            $locations = $user->locations ?? collect();
+            $totalLocations = $user->locations->count();
+            $locations = isset($user->latestLocations) ? $user->latestLocations : $user->locations->take(10);
         @endphp
-        @if($locations->count() > 0)
-            <span class="badge bg-label-primary">Latest {{ $locations->count() }} Locations</span>
+        @if($totalLocations > 0)
+            <span class="badge bg-label-primary">Latest {{ $locations->count() }} of {{ $totalLocations }} Locations</span>
         @endif
     </div>
     <div class="card-body p-0">
@@ -199,9 +212,21 @@
                     </div>
                 @endif
             </div>
-            <div class="text-center">
-                <p class="text-muted small mb-0">Showing latest {{ $locations->count() }} locations</p>
-            </div>
+            @php
+                $firstLoan = $user->loanDetails->first();
+            @endphp
+            @if($firstLoan)
+                <div class="text-center">
+                    <a href="{{ route('admin.kyc.locations', $firstLoan) }}" class="btn btn-primary btn-sm w-100">
+                        <i class="bx bx-map-alt me-1"></i>
+                        View Full Map & All {{ $totalLocations }} Locations
+                    </a>
+                </div>
+            @else
+                <div class="text-center">
+                    <p class="text-muted small mb-0">Showing latest {{ $locations->count() }} locations</p>
+                </div>
+            @endif
         </div>
     @endif
 </div>
