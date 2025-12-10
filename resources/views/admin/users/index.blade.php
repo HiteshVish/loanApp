@@ -2,6 +2,11 @@
 
 @section('title', 'Manage Users')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold py-3 mb-0">
@@ -12,17 +17,10 @@
 <div class="card">
     <h5 class="card-header d-flex justify-content-between align-items-center">
         <span>All Users</span>
-        <div class="input-group" style="width: 350px;">
-            <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" class="form-control" id="userSearch" placeholder="Search by name, email or ID...">
-            <button class="btn btn-outline-secondary" type="button" id="clearUserSearch" style="display: none;">
-                <i class="bx bx-x"></i>
-            </button>
-        </div>
-        <span class="badge bg-primary">{{ $users->total() }} Total Users</span>
+        <span class="badge bg-primary" id="totalUsersBadge">Loading...</span>
     </h5>
     <div class="table-responsive text-nowrap">
-        <table class="table">
+        <table id="usersTable" class="table table-striped" style="width:100%">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -35,84 +33,10 @@
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
-                @forelse($users as $user)
-                <tr>
-                    <td><strong>#{{ $user->id }}</strong></td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            @if($user->avatar)
-                                <img src="{{ $user->avatar }}" alt class="w-px-40 h-auto rounded-circle me-2" />
-                            @else
-                                <div class="avatar avatar-sm me-2">
-                                    <span class="avatar-initial rounded-circle bg-label-primary">{{ substr($user->name, 0, 1) }}</span>
-                                </div>
-                            @endif
-                            <div>
-                                <strong>{{ $user->name }}</strong>
-                                @if($user->id === auth()->id())
-                                    <span class="badge bg-label-info ms-1">You</span>
-                                @endif
-                            </div>
-                        </div>
-                    </td>
-                    <td>{{ $user->email }}</td>
-                    <td>
-                        @if($user->isAdmin())
-                            <span class="badge bg-label-danger">Admin</span>
-                        @else
-                            <span class="badge bg-label-primary">User</span>
-                        @endif
-                    </td>
-                    <td>{{ $user->created_at->format('M d, Y') }}</td>
-                    <td>
-                        @if($user->email_verified_at)
-                            <span class="badge bg-label-success">Verified</span>
-                        @else
-                            <span class="badge bg-label-warning">Unverified</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('admin.users.show', $user) }}" class="btn btn-sm btn-label-primary" title="View More">
-                                <i class="bx bx-show"></i>
-                            </a>
-                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-label-info" title="Edit">
-                                <i class="bx bx-edit-alt"></i>
-                            </a>
-                            @if(!$user->email_verified_at)
-                            <form action="{{ route('admin.users.verify-email', $user) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-label-success" title="Verify Email">
-                                    <i class="bx bx-check-shield"></i>
-                                </button>
-                            </form>
-                            @endif
-                            @if($user->id !== auth()->id())
-                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-label-danger" title="Delete">
-                                    <i class="bx bx-trash"></i>
-                                </button>
-                            </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center">No users found.</td>
-                </tr>
-                @endforelse
+                <!-- DataTables will populate this -->
             </tbody>
         </table>
     </div>
-    
-    @if($users->hasPages())
-    <div class="card-footer p-0">
-        {{ $users->links() }}
-    </div>
-    @endif
 </div>
 
 <div class="mt-4">
@@ -126,72 +50,141 @@
 
 
 @push('scripts')
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 <script>
-// Live search functionality (no page refresh)
-const searchInput = document.getElementById('userSearch');
-const clearSearchBtn = document.getElementById('clearUserSearch');
-const tableRows = document.querySelectorAll('.table tbody tr');
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        const searchValue = this.value.toLowerCase().trim();
-        let visibleCount = 0;
-        
-        // Show/hide clear button
-        clearSearchBtn.style.display = searchValue ? 'block' : 'none';
-        
-        // Filter table rows
-        tableRows.forEach(row => {
-            // Skip empty state row
-            if (row.querySelector('td[colspan]')) {
-                return;
+$(document).ready(function() {
+    const table = $('#usersTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.users.data') }}",
+            type: 'GET',
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error);
             }
-            
-            // Get searchable text from row
-            const id = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-            const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const email = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-            const role = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-            const joined = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-            const status = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
-            
-            const rowText = `${id} ${name} ${email} ${role} ${joined} ${status}`;
-            
-            // Show/hide row based on search
-            if (rowText.includes(searchValue)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+        },
+        columns: [
+            { 
+                data: 'id',
+                name: 'id',
+                render: function(data) {
+                    return '<strong>#' + data + '</strong>';
+                }
+            },
+            { 
+                data: 'name',
+                name: 'name',
+                render: function(data, type, row) {
+                    let avatar = '';
+                    if (row.avatar) {
+                        avatar = '<img src="' + row.avatar + '" alt class="w-px-40 h-auto rounded-circle me-2" />';
+                    } else {
+                        const initial = data.charAt(0).toUpperCase();
+                        avatar = '<div class="avatar avatar-sm me-2"><span class="avatar-initial rounded-circle bg-label-primary">' + initial + '</span></div>';
+                    }
+                    
+                    let badge = '';
+                    if (row.is_current_user) {
+                        badge = '<span class="badge bg-label-info ms-1">You</span>';
+                    }
+                    
+                    return '<div class="d-flex align-items-center">' + avatar + '<div><strong>' + data + '</strong>' + badge + '</div></div>';
+                }
+            },
+            { 
+                data: 'email',
+                name: 'email'
+            },
+            { 
+                data: 'role',
+                name: 'role',
+                render: function(data, type, row) {
+                    if (row.is_admin) {
+                        return '<span class="badge bg-label-danger">Admin</span>';
+                    } else {
+                        return '<span class="badge bg-label-primary">User</span>';
+                    }
+                }
+            },
+            { 
+                data: 'created_at',
+                name: 'created_at'
+            },
+            { 
+                data: 'email_verified_at',
+                name: 'email_verified_at',
+                render: function(data) {
+                    if (data === 'verified') {
+                        return '<span class="badge bg-label-success">Verified</span>';
+                    } else {
+                        return '<span class="badge bg-label-warning">Unverified</span>';
+                    }
+                }
+            },
+            { 
+                data: 'id',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    let actions = '<div class="d-flex gap-2">';
+                    
+                    // View button
+                    actions += '<a href="{{ url("admin/users") }}/' + data + '" class="btn btn-sm btn-label-primary" title="View More"><i class="bx bx-show"></i></a>';
+                    
+                    // Edit button
+                    actions += '<a href="{{ url("admin/users") }}/' + data + '/edit" class="btn btn-sm btn-label-info" title="Edit"><i class="bx bx-edit-alt"></i></a>';
+                    
+                    // Verify Email button (if unverified)
+                    if (row.email_verified_at !== 'verified') {
+                        actions += '<form action="{{ url("admin/users") }}/' + data + '/verify-email" method="POST" class="d-inline">';
+                        actions += '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+                        actions += '<button type="submit" class="btn btn-sm btn-label-success" title="Verify Email"><i class="bx bx-check-shield"></i></button>';
+                        actions += '</form>';
+                    }
+                    
+                    // Delete button (if not current user)
+                    if (!row.is_current_user) {
+                        actions += '<form action="{{ url("admin/users") }}/' + data + '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this user?\');">';
+                        actions += '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+                        actions += '<input type="hidden" name="_method" value="DELETE">';
+                        actions += '<button type="submit" class="btn btn-sm btn-label-danger" title="Delete"><i class="bx bx-trash"></i></button>';
+                        actions += '</form>';
+                    }
+                    
+                    actions += '</div>';
+                    return actions;
+                }
             }
-        });
-        
-        // Show "no results" message if nothing found
-        const tbody = document.querySelector('.table tbody');
-        let noResultsRow = tbody.querySelector('.no-results-row');
-        
-        if (visibleCount === 0 && searchValue) {
-            if (!noResultsRow) {
-                noResultsRow = document.createElement('tr');
-                noResultsRow.className = 'no-results-row';
-                noResultsRow.innerHTML = '<td colspan="7" class="text-center py-4"><i class="bx bx-search-alt bx-lg text-muted"></i><p class="mb-0 mt-2">No users found for "' + searchValue + '"</p></td>';
-                tbody.appendChild(noResultsRow);
+        ],
+        order: [[4, 'desc']], // Default order by created_at desc
+        pageLength: 15,
+        responsive: true,
+        language: {
+            processing: "Loading users...",
+            search: "Search:",
+            lengthMenu: "Show _MENU_ users per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ users",
+            infoEmpty: "No users found",
+            infoFiltered: "(filtered from _MAX_ total users)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
             }
-            noResultsRow.style.display = '';
-        } else if (noResultsRow) {
-            noResultsRow.style.display = 'none';
+        },
+        drawCallback: function(settings) {
+            // Update total users badge
+            const api = this.api();
+            const total = api.page.info().recordsTotal;
+            $('#totalUsersBadge').text(total + ' Total Users');
         }
     });
-    
-    // Clear search button
-    if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            searchInput.dispatchEvent(new Event('input'));
-            searchInput.focus();
-        });
-    }
-}
+});
 </script>
 @endpush
 @endsection

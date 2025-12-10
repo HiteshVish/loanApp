@@ -63,6 +63,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // User Management
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+    Route::get('/users-data', [AdminUserController::class, 'getUsersData'])->name('users.data');
     Route::resource('users', AdminUserController::class)->only(['index', 'edit', 'update', 'destroy']);
     Route::post('/users/{user}/verify-email', [AdminUserController::class, 'verifyEmail'])->name('users.verify-email');
     

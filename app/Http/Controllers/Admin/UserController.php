@@ -17,20 +17,69 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        return view('admin.users.index');
+    }
+
+    /**
+     * Get users data for DataTables (server-side processing)
+     */
+    public function getUsersData(Request $request)
+    {
         $query = User::query();
         
-        // Search by name, email, or ID
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('id', 'like', "%{$search}%");
+        // Get DataTables parameters
+        $draw = $request->get('draw');
+        $start = $request->get('start', 0);
+        $length = $request->get('length', 10);
+        $searchValue = $request->get('search')['value'] ?? '';
+        $orderColumn = $request->get('order')[0]['column'] ?? 0;
+        $orderDir = $request->get('order')[0]['dir'] ?? 'desc';
+        
+        // Define column mapping
+        $columns = ['id', 'name', 'email', 'role', 'created_at', 'email_verified_at'];
+        $orderColumnName = $columns[$orderColumn] ?? 'created_at';
+        
+        // Apply search filter
+        if (!empty($searchValue)) {
+            $query->where(function($q) use ($searchValue) {
+                $q->where('name', 'like', "%{$searchValue}%")
+                  ->orWhere('email', 'like', "%{$searchValue}%")
+                  ->orWhere('id', 'like', "%{$searchValue}%");
             });
         }
         
-        $users = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
-        return view('admin.users.index', compact('users'));
+        // Get total records before filtering
+        $totalRecords = User::count();
+        $filteredRecords = $query->count();
+        
+        // Apply ordering and pagination
+        $users = $query->orderBy($orderColumnName, $orderDir)
+                      ->skip($start)
+                      ->take($length)
+                      ->get();
+        
+        // Format data for DataTables
+        $data = [];
+        foreach ($users as $user) {
+            $data[] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'created_at' => $user->created_at->format('M d, Y'),
+                'email_verified_at' => $user->email_verified_at ? 'verified' : 'unverified',
+                'avatar' => $user->avatar,
+                'is_admin' => $user->isAdmin(),
+                'is_current_user' => $user->id === auth()->id(),
+            ];
+        }
+        
+        return response()->json([
+            'draw' => intval($draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
     }
 
     /**
