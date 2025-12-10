@@ -12,13 +12,13 @@
                 @if ($paginator->onFirstPage())
                     <li class="page-item disabled">
                         <span class="page-link" aria-disabled="true" aria-label="Previous">
-                            <i class="bx bx-chevron-left"></i>
+                            Previous
                         </span>
                     </li>
                 @else
                     <li class="page-item">
                         <a class="page-link" href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Previous">
-                            <i class="bx bx-chevron-left"></i>
+                            Previous
                         </a>
                     </li>
                 @endif
@@ -52,13 +52,13 @@
                 @if ($paginator->hasMorePages())
                     <li class="page-item">
                         <a class="page-link" href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Next">
-                            <i class="bx bx-chevron-right"></i>
+                            Next
                         </a>
                     </li>
                 @else
                     <li class="page-item disabled">
                         <span class="page-link" aria-disabled="true" aria-label="Next">
-                            <i class="bx bx-chevron-right"></i>
+                            Next
                         </span>
                     </li>
                 @endif
@@ -112,9 +112,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.625rem;
+    min-width: auto;
     height: 2.625rem;
-    padding: 0.5rem 0.875rem;
+    padding: 0.5rem 1rem;
     color: #697a8d;
     background-color: #fff;
     border: 1px solid #d9dee3;
@@ -125,6 +125,7 @@
     cursor: pointer;
     font-size: 0.9375rem;
     line-height: 1.5;
+    white-space: nowrap;
 }
 
 .page-link:hover:not(.disabled):not(.active) {
@@ -157,11 +158,6 @@
     opacity: 0.6;
 }
 
-.page-link i {
-    font-size: 1.375rem;
-    line-height: 1;
-    font-weight: 400;
-}
 
 @media (max-width: 768px) {
     .pagination-wrapper {
@@ -187,14 +183,10 @@
     }
     
     .page-link {
-        min-width: 2.375rem;
+        min-width: auto;
         height: 2.375rem;
-        padding: 0.375rem 0.625rem;
+        padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
-    }
-    
-    .page-link i {
-        font-size: 1.25rem;
     }
 }
 </style>
