@@ -69,124 +69,146 @@
 
 <style>
 .pagination-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem 1.5rem;
-    border-top: 1px solid #e7eaf3;
-    flex-wrap: wrap;
-    gap: 1rem;
-    background-color: #fff;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1.25rem 1.5rem !important;
+    border-top: 1px solid #e7eaf3 !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+    background-color: #fff !important;
 }
 
 .pagination-info {
-    font-size: 0.875rem;
-    color: #697a8d;
-    font-weight: 400;
+    font-size: 0.875rem !important;
+    color: #697a8d !important;
+    font-weight: 400 !important;
 }
 
 .pagination-info strong {
-    color: #566a7f;
-    font-weight: 600;
+    color: #566a7f !important;
+    font-weight: 600 !important;
 }
 
 .pagination-nav {
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
 }
 
-.pagination {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 0.375rem;
-    align-items: center;
+.pagination-wrapper .pagination {
+    display: flex !important;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0.375rem !important;
+    align-items: center !important;
 }
 
-.page-item {
-    margin: 0;
+.pagination-wrapper .page-item {
+    margin: 0 !important;
 }
 
-.page-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: auto;
-    height: 2.625rem;
-    padding: 0.5rem 1rem;
-    color: #697a8d;
-    background-color: #fff;
-    border: 1px solid #d9dee3;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-weight: 500;
-    cursor: pointer;
-    font-size: 0.9375rem;
-    line-height: 1.5;
-    white-space: nowrap;
+.pagination-wrapper .page-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: auto !important;
+    height: 2.625rem !important;
+    padding: 0.5rem 1rem !important;
+    color: #697a8d !important;
+    background-color: #fff !important;
+    border: 1px solid #d9dee3 !important;
+    border-radius: 0.5rem !important;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.5 !important;
+    white-space: nowrap !important;
 }
 
-.page-link:hover:not(.disabled):not(.active) {
-    color: #696cff;
-    background-color: #f5f5f9;
-    border-color: #696cff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(105, 108, 255, 0.15);
+.pagination-wrapper .page-link:hover:not(.disabled):not(.active) {
+    color: #696cff !important;
+    background-color: #f5f5f9 !important;
+    border-color: #696cff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(105, 108, 255, 0.15) !important;
 }
 
-.page-item.active .page-link {
-    color: #fff;
-    background-color: #696cff;
-    border-color: #696cff;
-    box-shadow: 0 2px 6px rgba(105, 108, 255, 0.35);
-    font-weight: 600;
+.pagination-wrapper .page-item.active .page-link {
+    color: #fff !important;
+    background-color: #696cff !important;
+    border-color: #696cff !important;
+    box-shadow: 0 2px 6px rgba(105, 108, 255, 0.35) !important;
+    font-weight: 600 !important;
 }
 
-.page-item.active .page-link:hover {
-    background-color: #5f63e6;
-    border-color: #5f63e6;
+.pagination-wrapper .page-item.active .page-link:hover {
+    background-color: #5f63e6 !important;
+    border-color: #5f63e6 !important;
 }
 
-.page-item.disabled .page-link {
-    color: #c7cdd4;
-    background-color: #f5f5f9;
-    border-color: #d9dee3;
-    cursor: not-allowed;
-    pointer-events: none;
-    opacity: 0.6;
+.pagination-wrapper .page-item.disabled .page-link {
+    color: #c7cdd4 !important;
+    background-color: #f5f5f9 !important;
+    border-color: #d9dee3 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    opacity: 0.6 !important;
+}
+
+/* Remove any icon styles */
+.pagination-wrapper .page-link i,
+.pagination-wrapper .page-link .bx,
+.pagination-wrapper .page-link::before,
+.pagination-wrapper .page-link::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Ensure text is visible */
+.pagination-wrapper .page-link {
+    text-indent: 0 !important;
+}
+
+/* Hide any chevron or arrow icons that might be added by theme */
+.pagination-wrapper .page-item.prev .page-link::before,
+.pagination-wrapper .page-item.previous .page-link::before,
+.pagination-wrapper .page-item.next .page-link::after {
+    display: none !important;
+    content: none !important;
 }
 
 
 @media (max-width: 768px) {
     .pagination-wrapper {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 1rem;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 1rem !important;
     }
     
     .pagination-info {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 0.75rem;
+        width: 100% !important;
+        text-align: center !important;
+        margin-bottom: 0.75rem !important;
     }
     
     .pagination-nav {
-        width: 100%;
-        justify-content: center;
+        width: 100% !important;
+        justify-content: center !important;
     }
     
-    .pagination {
-        gap: 0.25rem;
+    .pagination-wrapper .pagination {
+        gap: 0.25rem !important;
     }
     
-    .page-link {
-        min-width: auto;
-        height: 2.375rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
+    .pagination-wrapper .page-link {
+        min-width: auto !important;
+        height: 2.375rem !important;
+        padding: 0.375rem 0.75rem !important;
+        font-size: 0.875rem !important;
     }
 }
 </style>
