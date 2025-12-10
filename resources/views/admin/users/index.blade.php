@@ -109,10 +109,8 @@
     </div>
     
     @if($users->hasPages())
-    <div class="card-footer">
-        <div class="d-flex justify-content-center">
-            {{ $users->links() }}
-        </div>
+    <div class="card-footer p-0">
+        {{ $users->links() }}
     </div>
     @endif
 </div>
