@@ -20,36 +20,6 @@ class KycController extends Controller
      */
     public function index(Request $request)
     {
-        // Query loans - each loan is a separate application
-        $query = \App\Models\LoanDetail::with(['user.userDetail', 'user']);
-        
-        // Filter by status if provided
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-        
-        // Search by name, email, Loan ID, or user details
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('loan_id', 'like', "%{$search}%")
-                  ->orWhere('loan_amount', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($query) use ($search) {
-                      $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('user.userDetail', function($query) use ($search) {
-                      $query->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%")
-                            ->orWhere('mobile', 'like', "%{$search}%")
-                            ->orWhere('aadhar', 'like', "%{$search}%")
-                            ->orWhere('pan', 'like', "%{$search}%");
-                  });
-            });
-        }
-        
-        $loans = $query->latest()->paginate(20)->withQueryString();
-        
         // Calculate stats
         $stats = [
             'total' => \App\Models\LoanDetail::count(),
@@ -58,7 +28,103 @@ class KycController extends Controller
             'rejected' => \App\Models\LoanDetail::where('status', 'rejected')->count(),
         ];
             
-        return view('admin.kyc.index', compact('loans', 'stats'));
+        return view('admin.kyc.index', compact('stats'));
+    }
+
+    /**
+     * Get KYC applications data for DataTables (server-side processing)
+     */
+    public function getKycData(Request $request)
+    {
+        // Query loans - each loan is a separate application
+        $query = \App\Models\LoanDetail::with(['user.userDetail', 'user']);
+        
+        // Get DataTables parameters
+        $draw = $request->get('draw');
+        $start = $request->get('start', 0);
+        $length = $request->get('length', 20);
+        $searchValue = $request->get('search')['value'] ?? '';
+        $orderColumn = $request->get('order')[0]['column'] ?? 4;
+        $orderDir = $request->get('order')[0]['dir'] ?? 'desc';
+        
+        // Filter by status if provided
+        $statusFilter = $request->get('status');
+        if ($statusFilter) {
+            $query->where('status', $statusFilter);
+        }
+        
+        // Define column mapping
+        $columns = ['loan_id', 'name', 'loan_amount', 'tenure', 'created_at', 'status'];
+        $orderColumnName = $columns[$orderColumn] ?? 'created_at';
+        
+        // Apply search filter
+        if (!empty($searchValue)) {
+            $query->where(function($q) use ($searchValue) {
+                $q->where('loan_id', 'like', "%{$searchValue}%")
+                  ->orWhere('loan_amount', 'like', "%{$searchValue}%")
+                  ->orWhereHas('user', function($query) use ($searchValue) {
+                      $query->where('name', 'like', "%{$searchValue}%")
+                            ->orWhere('email', 'like', "%{$searchValue}%");
+                  })
+                  ->orWhereHas('user.userDetail', function($query) use ($searchValue) {
+                      $query->where('name', 'like', "%{$searchValue}%")
+                            ->orWhere('email', 'like', "%{$searchValue}%")
+                            ->orWhere('mobile', 'like', "%{$searchValue}%")
+                            ->orWhere('aadhar', 'like', "%{$searchValue}%")
+                            ->orWhere('pan', 'like', "%{$searchValue}%");
+                  });
+            });
+        }
+        
+        // Get total records before filtering
+        $baseQuery = \App\Models\LoanDetail::query();
+        if ($statusFilter) {
+            $baseQuery->where('status', $statusFilter);
+        }
+        $totalRecords = $baseQuery->count();
+        $filteredRecords = $query->count();
+        
+        // Apply ordering and pagination
+        if ($orderColumnName === 'name') {
+            // Special handling for name sorting (from user or userDetail)
+            $query->leftJoin('users', 'loan_details.user_id', '=', 'users.id')
+                  ->leftJoin('user_details', 'users.id', '=', 'user_details.user_id')
+                  ->select('loan_details.*')
+                  ->orderByRaw("COALESCE(user_details.name, users.name) {$orderDir}")
+                  ->groupBy('loan_details.id');
+        } else {
+            $query->orderBy($orderColumnName, $orderDir);
+        }
+        
+        $loans = $query->skip($start)->take($length)->get();
+        
+        // Format data for DataTables
+        $data = [];
+        foreach ($loans as $loan) {
+            $userDetail = $loan->user->userDetail;
+            $name = $userDetail ? $userDetail->name : $loan->user->name;
+            $email = $userDetail ? $userDetail->email : $loan->user->email;
+            
+            $data[] = [
+                'id' => $loan->id, // Database ID for route model binding
+                'loan_id' => $loan->loan_id,
+                'name' => $name,
+                'email' => $email,
+                'loan_amount' => $loan->loan_amount,
+                'tenure' => $loan->tenure,
+                'created_at' => $loan->created_at->format('M d, Y'),
+                'status' => $loan->status,
+                'avatar' => $loan->user->avatar,
+                'user_id' => $loan->user_id,
+            ];
+        }
+        
+        return response()->json([
+            'draw' => intval($draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
     }
 
     /**

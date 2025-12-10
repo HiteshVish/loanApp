@@ -69,6 +69,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // KYC Management (each loan is a separate application)
     Route::get('/kyc', [KycController::class, 'index'])->name('kyc.index');
+    Route::get('/kyc-data', [KycController::class, 'getKycData'])->name('kyc.data');
     Route::get('/kyc/create', [KycController::class, 'create'])->name('kyc.create');
     Route::post('/kyc', [KycController::class, 'store'])->name('kyc.store');
     Route::get('/kyc/{loan}', [KycController::class, 'show'])->name('kyc.show');

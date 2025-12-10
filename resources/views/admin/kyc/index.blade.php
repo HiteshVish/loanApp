@@ -2,6 +2,11 @@
 
 @section('title', 'KYC Applications')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold py-3 mb-0">
@@ -15,8 +20,8 @@
 <!-- Statistics Cards - Clickable Filters -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <a href="{{ route('admin.kyc.index') }}" class="text-decoration-none">
-            <div class="card {{ !request('status') ? 'border-primary' : '' }}" style="cursor: pointer; transition: all 0.3s;">
+        <a href="javascript:void(0)" class="text-decoration-none filter-card" data-status="">
+            <div class="card border-primary" style="cursor: pointer; transition: all 0.3s;">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar flex-shrink-0 me-3">
@@ -32,8 +37,8 @@
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ route('admin.kyc.index', ['status' => 'pending']) }}" class="text-decoration-none">
-            <div class="card {{ request('status') === 'pending' ? 'border-warning' : '' }}" style="cursor: pointer; transition: all 0.3s;">
+        <a href="javascript:void(0)" class="text-decoration-none filter-card" data-status="pending">
+            <div class="card" style="cursor: pointer; transition: all 0.3s;">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar flex-shrink-0 me-3">
@@ -49,8 +54,8 @@
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ route('admin.kyc.index', ['status' => 'approved']) }}" class="text-decoration-none">
-            <div class="card {{ request('status') === 'approved' ? 'border-success' : '' }}" style="cursor: pointer; transition: all 0.3s;">
+        <a href="javascript:void(0)" class="text-decoration-none filter-card" data-status="approved">
+            <div class="card" style="cursor: pointer; transition: all 0.3s;">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar flex-shrink-0 me-3">
@@ -66,8 +71,8 @@
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{{ route('admin.kyc.index', ['status' => 'rejected']) }}" class="text-decoration-none">
-            <div class="card {{ request('status') === 'rejected' ? 'border-danger' : '' }}" style="cursor: pointer; transition: all 0.3s;">
+        <a href="javascript:void(0)" class="text-decoration-none filter-card" data-status="rejected">
+            <div class="card" style="cursor: pointer; transition: all 0.3s;">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="avatar flex-shrink-0 me-3">
@@ -87,26 +92,11 @@
 <!-- Applications Table -->
 <div class="card">
     <h5 class="card-header d-flex justify-content-between align-items-center">
-        <span>
-            @if(request('status'))
-                {{ ucfirst(request('status')) }} KYC Applications
-                <a href="{{ route('admin.kyc.index') }}" class="btn btn-sm btn-outline-secondary ms-2">
-                    <i class="bx bx-x"></i> Clear Filter
-                </a>
-            @else
-                All KYC Applications
-            @endif
-        </span>
-        <div class="input-group" style="width: 350px;">
-            <span class="input-group-text"><i class="bx bx-search"></i></span>
-            <input type="text" class="form-control" id="kycSearch" placeholder="Search by name, email or Loan ID...">
-            <button class="btn btn-outline-secondary" type="button" id="clearSearch" style="display: none;">
-                <i class="bx bx-x"></i>
-            </button>
-        </div>
+        <span id="tableTitle">All KYC Applications</span>
+        <span class="badge bg-primary" id="totalKycBadge">Loading...</span>
     </h5>
     <div class="table-responsive text-nowrap">
-        <table class="table">
+        <table id="kycTable" class="table table-striped" style="width:100%">
             <thead>
                 <tr>
                     <th>Loan ID</th>
@@ -119,141 +109,183 @@
                 </tr>
             </thead>
             <tbody class="table-border-bottom-0">
-                @forelse($loans as $loan)
-                <tr>
-                    <td><strong>{{ $loan->loan_id }}</strong></td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            @php
-                                $userDetail = $loan->user->userDetail;
-                                $name = $userDetail ? $userDetail->name : $loan->user->name;
-                                $email = $userDetail ? $userDetail->email : $loan->user->email;
-                            @endphp
-                            @if($loan->user->avatar)
-                                <img src="{{ $loan->user->avatar }}" alt class="w-px-40 h-auto rounded-circle me-2" />
-                            @else
-                                <div class="avatar avatar-sm me-2">
-                                    <span class="avatar-initial rounded-circle bg-label-primary">{{ substr($name, 0, 1) }}</span>
-                                </div>
-                            @endif
-                            <div>
-                                <strong>{{ $name }}</strong>
-                                <br><small class="text-muted">{{ $email }}</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>₹{{ number_format($loan->loan_amount, 2) }}</td>
-                    <td><span class="badge bg-label-info">{{ $loan->tenure }} months</span></td>
-                    <td>{{ $loan->created_at->format('M d, Y') }}</td>
-                    <td>
-                        @if($loan->status === 'pending')
-                            <span class="badge bg-warning">Pending</span>
-                        @elseif($loan->status === 'approved')
-                            <span class="badge bg-success">Approved</span>
-                        @elseif($loan->status === 'rejected')
-                            <span class="badge bg-danger">Rejected</span>
-                        @else
-                            <span class="badge bg-secondary">{{ ucfirst($loan->status) }}</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <a href="{{ route('admin.kyc.show', $loan) }}" class="btn btn-sm btn-label-primary" title="Review">
-                                <i class="bx bx-show"></i>
-                            </a>
-                            <form action="{{ route('admin.kyc.destroy', $loan) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this loan?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-label-danger" title="Delete">
-                                    <i class="bx bx-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="text-center">No KYC applications found.</td>
-                </tr>
-                @endforelse
+                <!-- DataTables will populate this -->
             </tbody>
         </table>
     </div>
-    
-    @if($loans->hasPages())
-    <div class="card-footer">
-        {{ $loans->links() }}
-    </div>
-    @endif
 </div>
 
 @push('scripts')
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 <script>
-// Live search functionality (no page refresh)
-const searchInput = document.getElementById('kycSearch');
-const clearSearchBtn = document.getElementById('clearSearch');
-const tableRows = document.querySelectorAll('.table tbody tr');
-
-if (searchInput) {
-    searchInput.addEventListener('input', function() {
-        const searchValue = this.value.toLowerCase().trim();
-        let visibleCount = 0;
-        
-        // Show/hide clear button
-        clearSearchBtn.style.display = searchValue ? 'block' : 'none';
-        
-        // Filter table rows
-        tableRows.forEach(row => {
-            // Skip empty state row
-            if (row.querySelector('td[colspan]')) {
-                return;
+$(document).ready(function() {
+    let currentStatus = '';
+    
+    const table = $('#kycTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ route('admin.kyc.data') }}",
+            type: 'GET',
+            data: function(d) {
+                d.status = currentStatus;
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error);
             }
-            
-            // Get searchable text from row
-            const id = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-            const applicantName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-            const loanAmount = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-            const purpose = row.querySelector('td:nth-child(4)').textContent.toLowerCase();
-            const submitted = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-            const status = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
-            
-            const rowText = `${id} ${applicantName} ${loanAmount} ${purpose} ${submitted} ${status}`;
-            
-            // Show/hide row based on search
-            if (rowText.includes(searchValue)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+        },
+        columns: [
+            { 
+                data: 'loan_id',
+                name: 'loan_id',
+                render: function(data) {
+                    return '<strong>' + data + '</strong>';
+                }
+            },
+            { 
+                data: 'name',
+                name: 'name',
+                render: function(data, type, row) {
+                    let avatar = '';
+                    if (row.avatar) {
+                        avatar = '<img src="' + row.avatar + '" alt class="w-px-40 h-auto rounded-circle me-2" />';
+                    } else {
+                        const initial = data.charAt(0).toUpperCase();
+                        avatar = '<div class="avatar avatar-sm me-2"><span class="avatar-initial rounded-circle bg-label-primary">' + initial + '</span></div>';
+                    }
+                    
+                    return '<div class="d-flex align-items-center">' + avatar + '<div><strong>' + data + '</strong><br><small class="text-muted">' + row.email + '</small></div></div>';
+                }
+            },
+            { 
+                data: 'loan_amount',
+                name: 'loan_amount',
+                render: function(data) {
+                    return '₹' + parseFloat(data).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            },
+            { 
+                data: 'tenure',
+                name: 'tenure',
+                render: function(data) {
+                    return '<span class="badge bg-label-info">' + data + ' months</span>';
+                }
+            },
+            { 
+                data: 'created_at',
+                name: 'created_at'
+            },
+            { 
+                data: 'status',
+                name: 'status',
+                render: function(data) {
+                    let badgeClass = 'bg-secondary';
+                    let badgeText = data.charAt(0).toUpperCase() + data.slice(1);
+                    
+                    if (data === 'pending') {
+                        badgeClass = 'bg-warning';
+                    } else if (data === 'approved') {
+                        badgeClass = 'bg-success';
+                    } else if (data === 'rejected') {
+                        badgeClass = 'bg-danger';
+                    }
+                    
+                    return '<span class="badge ' + badgeClass + '">' + badgeText + '</span>';
+                }
+            },
+            { 
+                data: 'id',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    let actions = '<div class="d-flex gap-2">';
+                    
+                    // Review button (using database ID for route model binding)
+                    actions += '<a href="{{ url("admin/kyc") }}/' + data + '" class="btn btn-sm btn-label-primary" title="Review"><i class="bx bx-show"></i></a>';
+                    
+                    // Delete button (using database ID for route model binding)
+                    actions += '<form action="{{ url("admin/kyc") }}/' + data + '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this loan?\');">';
+                    actions += '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
+                    actions += '<input type="hidden" name="_method" value="DELETE">';
+                    actions += '<button type="submit" class="btn btn-sm btn-label-danger" title="Delete"><i class="bx bx-trash"></i></button>';
+                    actions += '</form>';
+                    
+                    actions += '</div>';
+                    return actions;
+                }
             }
-        });
-        
-        // Show "no results" message if nothing found
-        const tbody = document.querySelector('.table tbody');
-        let noResultsRow = tbody.querySelector('.no-results-row');
-        
-        if (visibleCount === 0 && searchValue) {
-            if (!noResultsRow) {
-                noResultsRow = document.createElement('tr');
-                noResultsRow.className = 'no-results-row';
-                noResultsRow.innerHTML = '<td colspan="7" class="text-center py-4"><i class="bx bx-search-alt bx-lg text-muted"></i><p class="mb-0 mt-2">No applications found for "' + searchValue + '"</p></td>';
-                tbody.appendChild(noResultsRow);
+        ],
+        order: [[4, 'desc']], // Default order by created_at desc
+        pageLength: 20,
+        responsive: true,
+        language: {
+            processing: "Loading applications...",
+            search: "Search:",
+            lengthMenu: "Show _MENU_ applications per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ applications",
+            infoEmpty: "No applications found",
+            infoFiltered: "(filtered from _MAX_ total applications)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
             }
-            noResultsRow.style.display = '';
-        } else if (noResultsRow) {
-            noResultsRow.style.display = 'none';
+        },
+        drawCallback: function(settings) {
+            // Update total badge
+            const api = this.api();
+            const total = api.page.info().recordsTotal;
+            $('#totalKycBadge').text(total + ' Total Applications');
         }
     });
     
-    // Clear search button
-    if (clearSearchBtn) {
-        clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            searchInput.dispatchEvent(new Event('input'));
-            searchInput.focus();
-        });
+    // Handle filter card clicks
+    $('.filter-card').on('click', function() {
+        const status = $(this).data('status');
+        currentStatus = status;
+        
+        // Update card borders
+        $('.filter-card .card').removeClass('border-primary border-warning border-success border-danger');
+        if (status === '') {
+            $(this).find('.card').addClass('border-primary');
+        } else if (status === 'pending') {
+            $(this).find('.card').addClass('border-warning');
+        } else if (status === 'approved') {
+            $(this).find('.card').addClass('border-success');
+        } else if (status === 'rejected') {
+            $(this).find('.card').addClass('border-danger');
+        }
+        
+        // Update table title
+        if (status === '') {
+            $('#tableTitle').text('All KYC Applications');
+        } else {
+            $('#tableTitle').html(ucfirst(status) + ' KYC Applications <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary ms-2 clear-filter"><i class="bx bx-x"></i> Clear Filter</a>');
+        }
+        
+        // Reload table with new filter
+        table.ajax.reload();
+    });
+    
+    // Handle clear filter
+    $(document).on('click', '.clear-filter', function() {
+        currentStatus = '';
+        $('.filter-card .card').removeClass('border-primary border-warning border-success border-danger');
+        $('.filter-card[data-status=""]').find('.card').addClass('border-primary');
+        $('#tableTitle').text('All KYC Applications');
+        table.ajax.reload();
+    });
+    
+    // Helper function
+    function ucfirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
-}
+});
 </script>
 @endpush
 @endsection
