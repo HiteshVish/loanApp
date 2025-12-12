@@ -106,7 +106,7 @@ class KycController extends Controller
             $email = $userDetail ? $userDetail->email : $loan->user->email;
             
             $data[] = [
-                'id' => $loan->id, // Database ID for route model binding
+                'id' => $loan->loan_id, // loan_id is the primary key
                 'loan_id' => $loan->loan_id,
                 'name' => $name,
                 'email' => $email,

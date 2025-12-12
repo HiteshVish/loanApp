@@ -197,18 +197,26 @@ $(document).ready(function() {
                 }
             },
             { 
-                data: 'id',
+                data: 'loan_id',
                 name: 'actions',
                 orderable: false,
                 searchable: false,
                 render: function(data, type, row) {
+                    // Use loan_id (which is the primary key) for route model binding
+                    const loanId = data || row.loan_id || row.id;
+                    
+                    if (!loanId) {
+                        console.error('Loan ID is missing for row:', row);
+                        return '<span class="text-danger">Error: Missing ID</span>';
+                    }
+                    
                     let actions = '<div class="d-flex gap-2">';
                     
-                    // Review button (using database ID for route model binding)
-                    actions += '<a href="{{ url("admin/kyc") }}/' + data + '" class="btn btn-sm btn-label-primary" title="Review"><i class="bx bx-show"></i></a>';
+                    // Review button (using loan_id for route model binding)
+                    actions += '<a href="{{ url("admin/kyc") }}/' + loanId + '" class="btn btn-sm btn-label-primary" title="Review"><i class="bx bx-show"></i></a>';
                     
-                    // Delete button (using database ID for route model binding)
-                    actions += '<form action="{{ url("admin/kyc") }}/' + data + '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this loan?\');">';
+                    // Delete button (using loan_id for route model binding)
+                    actions += '<form action="{{ url("admin/kyc") }}/' + loanId + '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this loan?\');">';
                     actions += '<input type="hidden" name="_token" value="{{ csrf_token() }}">';
                     actions += '<input type="hidden" name="_method" value="DELETE">';
                     actions += '<button type="submit" class="btn btn-sm btn-label-danger" title="Delete"><i class="bx bx-trash"></i></button>';
